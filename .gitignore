@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Laufzeit-/Nutzerdaten - gehoeren NICHT ins Repo
+pending-tasks.json
+applied-tasks.json
+*.backup-*
+merger-wrapper.log
+CARE-LOG.md
+CARE-REGISTRY.md
+
+# Lokale Planung / Interna
+AUFGABEN.txt
+TODO.md
+STATE.md
+NOTES.md
+_archive/
+_intern/
+LOCK*.txt
+
+# OS
+Thumbs.db
+.DS_Store
