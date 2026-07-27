@@ -107,6 +107,11 @@ def pruefe_set(w, nach_id):
     if unerlaubt:
         return False, "ABGELEHNT (%s/%s): unerlaubte Felder %s" % (wer, tid, sorted(unerlaubt))
 
+    modus = felder.get("permissionMode")
+    if modus is not None and modus not in ERLAUBTE_MODI:
+        return False, ("ABGELEHNT (%s/%s): permissionMode '%s' unbekannt (erlaubt: %s)"
+                       % (wer, tid, modus, ", ".join(sorted(ERLAUBTE_MODI))))
+
     if SELBSTSCHUTZ_PREFIX and tid.startswith(SELBSTSCHUTZ_PREFIX) and felder.get("enabled") is False:
         return False, ("ABGELEHNT (%s): '%s' ist eine Pflegeaufgabe und darf nicht deaktiviert "
                        "werden (Selbstschutz)" % (wer, tid))
