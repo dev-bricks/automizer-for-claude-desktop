@@ -1,0 +1,33 @@
+# Automizer for Claude Desktop
+
+> Machine-readable context file for LLM agents working with `automizer-for-claude-desktop`.
+> Last checked: 2026-07-29
+
+## Overview
+`automizer-for-claude-desktop` is a utility tool designed to reliably modify and queue scheduled tasks for the official Claude Desktop app on Windows (and macOS/Linux supported paths).
+
+Because the Claude Desktop app holds its task registry (`scheduled-tasks.json`) in memory and overwrites it upon session exit, direct modification while the app is running causes silent data loss. Automizer solves this by decoupling change requests into a pending queue (`_care/pending/pending-tasks.json`) and applying them atomically when the desktop app is closed.
+
+## Repository Structure
+- `tools/claude_desktop_paths.py`: Path resolution helper for registry file (`scheduled-tasks.json`) and task prompt directory (`<Documents>/Claude/Scheduled/`). Handles Windows registry shell folder redirection (OneDrive Known-Folder-Move).
+- `tools/queue_request.py`: CLI tool for enqueueing task modification (`set`) or creation (`create`) requests.
+- `tools/apply_pending_tasks.py`: Merges queued pending tasks into `scheduled-tasks.json` with automatic backup and validation.
+- `tools/install_merger_task.ps1`: PowerShell script to register an hourly background task in Windows Task Scheduler.
+- `tools/run_apply_pending_hidden.vbs`: VBScript wrapper for windowless background execution.
+- `prompts/`: Standard prompt templates for agent context integration (in-app, external while running, app closed).
+- `skill/self-administration-of-scheduled-tasks/SKILL.md`: Claude Skill definition for automated self-management.
+- `tests/test_automizer.py`: Pytest suite verifying path resolution and queue operations.
+
+## Key Concepts
+1. **Registry (`scheduled-tasks.json`)**: Contains task schedule, model choice, permissions, and cron expressions. Located in `%APPDATA%\Claude\local-agent-mode-sessions\<session>\<account>\scheduled-tasks.json`.
+2. **Task Prompt (`SKILL.md`)**: Contains the instruction body for the scheduled task. Located in `<Documents>/Claude/Scheduled/<slug>/SKILL.md`.
+3. **Pending Queue (`pending-tasks.json`)**: Stored in `<Documents>/Claude/Scheduled/_care/pending/pending-tasks.json`.
+
+## Usage & Verification
+```bash
+# Verify path resolution
+python tools/apply_pending_tasks.py --paths
+
+# Run tests
+pytest
+```
