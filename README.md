@@ -1,5 +1,8 @@
 # Automizer for Claude Desktop
 
+<img src="assets/banner.png" width="100%" alt="Automizer For Claude Desktop banner">
+
+
 [![Python 3.8+](https://img.shields.io/badge/python-3.8%2B-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Ecosystem: dev-bricks](https://img.shields.io/badge/Ecosystem-dev--bricks-blueviolet.svg)](https://github.com/dev-bricks)
