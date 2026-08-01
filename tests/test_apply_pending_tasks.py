@@ -95,6 +95,57 @@ class PermissionModeValidationTests(unittest.TestCase):
 
 
 class FailClosedValidationTests(unittest.TestCase):
+    def test_keeps_wish_for_task_of_other_host(self):
+        """Ein set-Wunsch fuer eine hier unbekannte Aufgabe darf NICHT verworfen werden.
+
+        pending-tasks.json wird ueber OneDrive von allen Hosts geteilt, die Registry liegt
+        hostlokal. Ohne diesen Schutz loescht der erste Lauf auf dem falschen Host die
+        Wuensche des anderen (belegt am 2026-08-01: 4 ASUS-Wuensche auf WORKSTATION-LG).
+        """
+        merger = load_merger_module()
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temporary_root = Path(temp_dir)
+            registry_path = temporary_root / "scheduled-tasks.json"
+            care_dir = temporary_root / "Scheduled" / "_care"
+            pending_path = care_dir / "pending" / "pending-tasks.json"
+            registry = {"scheduledTasks": [{"id": "local-task", "cronExpression": "0 9 * * *"}]}
+            fremd = {
+                "op": "set",
+                "taskId": "task-of-other-host",
+                "fields": {"cronExpression": "0 8 * * *"},
+                "requestedBy": "regression-test",
+            }
+            registry_path.write_text(json.dumps(registry), encoding="utf-8")
+            pending_path.parent.mkdir(parents=True)
+            pending_path.write_text(json.dumps({"pending": [fremd]}), encoding="utf-8")
+
+            stdout = io.StringIO()
+            with patch.object(
+                sys,
+                "argv",
+                [
+                    "apply_pending_tasks.py",
+                    "--registry",
+                    str(registry_path),
+                    "--care-dir",
+                    str(care_dir),
+                    "--ignore-app-state",
+                ],
+            ), contextlib.redirect_stdout(stdout):
+                exit_code = merger.main()
+
+            self.assertEqual(exit_code, 0)
+            self.assertIn("UEBERGANGEN", stdout.getvalue())
+            # Registry unberuehrt
+            self.assertEqual(
+                json.loads(registry_path.read_text(encoding="utf-8")), registry
+            )
+            # und der Wunsch steht noch da - das ist der Kern dieses Tests
+            self.assertEqual(
+                json.loads(pending_path.read_text(encoding="utf-8")), {"pending": [fremd]}
+            )
+
     def test_rejects_non_dict_pending_root_fail_closed(self):
         merger = load_merger_module()
         with tempfile.TemporaryDirectory() as temp_dir:

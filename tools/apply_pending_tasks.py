@@ -99,6 +99,26 @@ def log(logpfad, zeilen):
         print("WARNUNG: Log nicht schreibbar (%s)" % e)
 
 
+def ist_fremder_host(w, nach_id):
+    """True, wenn ein set-Wunsch eine hier nicht registrierte Aufgabe meint.
+
+    pending-tasks.json liegt in OneDrive und wird von ALLEN Hosts geteilt; die Registry
+    (scheduled-tasks.json) liegt hostlokal unter %APPDATA%. Ein Wunsch fuer eine Aufgabe,
+    die nur der andere Host kennt, ist hier kein Fehler - er ist nicht zustaendig und muss
+    in der Warteschlange bleiben, sonst loescht ihn der erste Lauf auf dem falschen Host.
+
+    Belegt am 2026-08-01: WORKSTATION-LG hatte 1 registrierte Aufgabe, ASUS-GEI mehrere;
+    alle 4 offenen Wuensche gehoerten zu ASUS-Aufgaben und waeren hier verlorengegangen.
+
+    Nur fuer op="set". Ein create-Wunsch, dessen Aufgabe hier bereits existiert, ist eine
+    echte Kollision und wird weiterhin abgelehnt.
+    """
+    return (isinstance(w, dict)
+            and w.get("op", "set") == "set"
+            and isinstance(w.get("taskId"), str)
+            and w["taskId"] not in nach_id)
+
+
 def pruefe_set(w, nach_id):
     if not isinstance(w, dict):
         return False, "ABGELEHNT: Ungueltiger Wunsch-Eintrag (kein JSON-Objekt)"
@@ -109,7 +129,12 @@ def pruefe_set(w, nach_id):
     if not tid or not isinstance(tid, str) or not isinstance(felder, dict) or not felder:
         return False, "ABGELEHNT (%s): Wunsch ohne gueltige taskId oder ohne fields" % wer
     if tid not in nach_id:
-        return False, "ABGELEHNT (%s): Aufgabe '%s' existiert nicht in der Registry" % (wer, tid)
+        # Kein Fehler, sondern Unzustaendigkeit: pending-tasks.json wird ueber OneDrive von
+        # allen Hosts geteilt, die Registries liegen aber hostlokal unter %APPDATA%. Der
+        # Wunsch gehoert dann dem anderen Host und darf hier NICHT verworfen werden -
+        # siehe ist_fremder_host() und den Aufrufer.
+        return False, ("UEBERGANGEN (%s): Aufgabe '%s' gibt es auf diesem Host nicht - "
+                       "Wunsch bleibt fuer den zustaendigen Host stehen" % (wer, tid))
 
     unerlaubt = set(felder) - ERLAUBTE_FELDER
     if unerlaubt:
@@ -358,6 +383,8 @@ def main():
                        else pruefer(w, nach_id, scheduled_dir))
         if not ok:
             meldungen.append(meldung)
+            if ist_fremder_host(w, nach_id):
+                offen.append(w)   # anderer Host zustaendig - NICHT verwerfen
             continue
 
         tid, felder = w["taskId"], w.get("fields") or {}
