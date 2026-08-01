@@ -15,7 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Standardized `README.md` with Shields.io badges, GFM alert callout boxes, and Mermaid architecture diagram.
-- Updated documentation and verification timestamps (`2026-07-30`).
+- Updated documentation and verification timestamps (`2026-08-01`).
+- Aligned `README_de.md` layout, added missing banner graphic, and fixed section header typography.
 - Synchronized Pytest test badges in `README.md` & `README_de.md` (5/5 passed).
 - Verified 5/5 Pytest unit tests, compileall & git status cleanliness.
 

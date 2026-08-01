@@ -1,7 +1,7 @@
 # Automizer for Claude Desktop
 
 > Machine-readable context file for LLM agents working with `automizer-for-claude-desktop`.
-> Last checked: 2026-07-30
+> Last checked: 2026-08-01
 
 ## Overview
 `automizer-for-claude-desktop` is a utility tool designed to reliably modify and queue scheduled tasks for the official Claude Desktop app on Windows (and macOS/Linux supported paths).
