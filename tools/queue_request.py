@@ -100,6 +100,9 @@ def main():
         try:
             with open(ziel, "r", encoding="utf-8") as f:
                 daten = json.load(f)
+            if not isinstance(daten, dict) or not isinstance(daten.get("pending"), list):
+                print("FEHLER: %s hat ein ungueltiges Format (muss JSON-Objekt mit 'pending'-Liste sein) - nichts eingereiht." % ziel)
+                return 1
         except (ValueError, OSError) as e:
             # Nicht ueberschreiben - sonst gingen fremde Wuensche verloren.
             print("FEHLER: %s ist nicht lesbar (%s) - nichts eingereiht." % (ziel, e))

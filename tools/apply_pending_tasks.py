@@ -29,6 +29,8 @@ AUFRUF
     python apply_pending_tasks.py                 normaler Lauf
     python apply_pending_tasks.py --status        Kurzstatus, aendert nichts
     python apply_pending_tasks.py --dry-run       zeigt nur, was passieren wuerde
+    python apply_pending_tasks.py --rollback <id> Rollback der letzten set-Aenderung
+    python apply_pending_tasks.py --report <path> Trockenlauf-Bericht schreiben
     python apply_pending_tasks.py --paths         gefundene Pfade zeigen (Fehlersuche)
     python apply_pending_tasks.py --registry <p> --care-dir <p> --ignore-app-state
                                                   NUR FUER TESTS gegen Kopien
@@ -73,10 +75,14 @@ def lade(pfad, default):
 
 
 def schreibe(pfad, daten):
+    if isinstance(daten, str):
+        content = daten
+    else:
+        content = json.dumps(daten, indent=2, ensure_ascii=False)
     os.makedirs(os.path.dirname(pfad), exist_ok=True)
     tmp = pfad + ".tmp"
     with open(tmp, "w", encoding="utf-8") as f:
-        json.dump(daten, f, indent=2, ensure_ascii=False)
+        f.write(content)
     os.replace(tmp, pfad)
 
 
@@ -94,12 +100,14 @@ def log(logpfad, zeilen):
 
 
 def pruefe_set(w, nach_id):
+    if not isinstance(w, dict):
+        return False, "ABGELEHNT: Ungueltiger Wunsch-Eintrag (kein JSON-Objekt)"
     tid = w.get("taskId")
-    felder = w.get("fields") or {}
+    felder = w.get("fields")
     wer = w.get("requestedBy", "?")
 
-    if not tid or not isinstance(felder, dict) or not felder:
-        return False, "ABGELEHNT (%s): Wunsch ohne taskId oder ohne fields" % wer
+    if not tid or not isinstance(tid, str) or not isinstance(felder, dict) or not felder:
+        return False, "ABGELEHNT (%s): Wunsch ohne gueltige taskId oder ohne fields" % wer
     if tid not in nach_id:
         return False, "ABGELEHNT (%s): Aufgabe '%s' existiert nicht in der Registry" % (wer, tid)
 
@@ -119,23 +127,26 @@ def pruefe_set(w, nach_id):
 
 
 def pruefe_create(w, nach_id, scheduled_dir):
+    if not isinstance(w, dict):
+        return False, "ABGELEHNT: Ungueltiger Wunsch-Eintrag (kein JSON-Objekt)"
     tid = w.get("taskId")
     wer = w.get("requestedBy", "?")
-    felder = w.get("fields") or {}
+    felder = w.get("fields")
 
-    if not tid or not SLUG_RE.match(tid):
+    if not tid or not isinstance(tid, str) or not SLUG_RE.match(tid):
         return False, ("ABGELEHNT (%s): '%s' ist kein gueltiger Slug (klein, a-z 0-9 -)"
                        % (wer, tid))
     if tid in nach_id:
         return False, "ABGELEHNT (%s): Aufgabe '%s' existiert bereits - nutze 'set'" % (wer, tid)
 
+    if not isinstance(felder, dict):
+        return False, "ABGELEHNT (%s/%s): 'fields' muss ein JSON-Objekt sein" % (wer, tid)
+
     unerlaubt = set(felder) - ERLAUBTE_FELDER
     if unerlaubt:
         return False, "ABGELEHNT (%s/%s): unerlaubte Felder %s" % (wer, tid, sorted(unerlaubt))
 
-    # Ohne Zeitplan wird die Aufgabe angelegt, laeuft aber nie und taucht in der
-    # Liste der App nicht auf. Das ist erfahrungsgemaess der haeufigste Fehler.
-    if not felder.get("cronExpression"):
+    if not felder.get("cronExpression") or not isinstance(felder.get("cronExpression"), str):
         return False, ("ABGELEHNT (%s/%s): create ohne cronExpression - die Aufgabe wuerde nie "
                        "laufen und nicht in der Liste erscheinen" % (wer, tid))
 
@@ -153,11 +164,7 @@ def pruefe_create(w, nach_id, scheduled_dir):
 
 
 def schreibe_skill_datei(scheduled_dir, tid, w):
-    """Legt <Scheduled>/<slug>/SKILL.md an. Gibt den Pfad zurueck.
-
-    Eine bereits vorhandene Datei wird NICHT ueberschrieben - sonst ginge ein von Hand
-    gepflegter Auftragstext verloren.
-    """
+    """Legt <Scheduled>/<slug>/SKILL.md an. Gibt den Pfad zurueck."""
     ordner = os.path.join(scheduled_dir, tid)
     os.makedirs(ordner, exist_ok=True)
     ziel = os.path.join(ordner, "SKILL.md")
@@ -172,11 +179,42 @@ def schreibe_skill_datei(scheduled_dir, tid, w):
     return ziel
 
 
+def schreibe_bericht(report_pfad, reg_pfad, care, pending_pfad, app_laeuft, modus, meldungen):
+    lines = [
+        "# Merger Dry-Run-Bericht",
+        "",
+        "- **Zeit:** %s" % time.strftime("%Y-%m-%d %H:%M:%S"),
+        "- **Registry:** `%s`" % reg_pfad,
+        "- **CARE-Verzeichnis:** `%s`" % care,
+        "- **Pending-Pfad:** `%s`" % pending_pfad,
+        "- **Desktop-App:** %s" % ("laeuft" if app_laeuft else "geschlossen"),
+        "- **Modus:** %s" % modus,
+        "",
+        "## Entscheidungen und Protokoll",
+        "",
+    ]
+    if meldungen:
+        for m in meldungen:
+            lines.append("- %s" % m)
+    else:
+        lines.append("- Keine Aenderungen oder Entscheidungen protokolliert.")
+    lines.extend([
+        "",
+        "## Status",
+        "- Exit Code: 0",
+        "- naechster Schritt: sobald die Desktop-App geschlossen ist, verarbeitet der Merger offene Wuensche.",
+        "",
+    ])
+    schreibe(report_pfad, "\n".join(lines))
+
+
 def main():
     p = argparse.ArgumentParser(add_help=True)
     p.add_argument("--dry-run", action="store_true")
     p.add_argument("--status", action="store_true")
     p.add_argument("--paths", action="store_true", help="gefundene Pfade zeigen")
+    p.add_argument("--rollback", help="taskId (Slug) fuer den Rollback der letzten angewandten set-Aenderung")
+    p.add_argument("--report", help="Pfad fuer den persistenten Bericht (z. B. _care/reports/dry-run.md)")
     p.add_argument("--registry")
     p.add_argument("--care-dir")
     p.add_argument("--ignore-app-state", action="store_true",
@@ -199,40 +237,114 @@ def main():
         log(logpfad, ["FEHLER: Registry nicht gefunden (%s)" % reg_pfad])
         return 1
 
-    pend = lade(pending_pfad, {"pending": []})
-    if pend is None:
-        print("FEHLER: %s ist kein gueltiges JSON - nichts geaendert." % pending_pfad)
-        log(logpfad, ["FEHLER: pending-tasks.json ist kein gueltiges JSON - nichts geaendert."])
+    reg = lade(reg_pfad, None)
+    if not isinstance(reg, dict) or "scheduledTasks" not in reg or not isinstance(reg.get("scheduledTasks"), list):
+        print("FEHLER: Registry unlesbar oder unerwartetes Format: %s" % reg_pfad)
+        log(logpfad, ["FEHLER: Registry unlesbar: %s" % reg_pfad])
         return 1
-    wuensche = pend.get("pending") or []
+    nach_id = {t.get("id"): t for t in reg["scheduledTasks"] if isinstance(t, dict) and isinstance(t.get("id"), str)}
+
+    app_laeuft = False if a.ignore_app_state else pfade.app_laeuft()
+
+    # --- ROLLBACK MODUS ---
+    if a.rollback:
+        rollback_tid = a.rollback
+        hist = lade(applied_pfad, None)
+        if not isinstance(hist, dict) or "applied" not in hist or not isinstance(hist.get("applied"), list):
+            print("FEHLER: Historie %s ist unlesbar oder hat unerwartetes Format." % applied_pfad)
+            log(logpfad, ["FEHLER: Historie %s unlesbar für Rollback von '%s'" % (applied_pfad, rollback_tid)])
+            return 1
+
+        passende = [e for e in hist["applied"] if isinstance(e, dict) and e.get("taskId") == rollback_tid]
+        if not passende:
+            print("FEHLER: Kein angewandter Eintrag fuer '%s' in der Historie gefunden." % rollback_tid)
+            log(logpfad, ["FEHLER: Rollback fuer '%s' fehlgeschlagen (kein Historieneintrag)" % rollback_tid])
+            return 1
+
+        letzter = passende[-1]
+        if letzter.get("op") != "set":
+            print("FEHLER: Rollback fuer 'create' ('%s') wird nicht unterstuetzt - Loeschen bleibt dem Menschen in der App vorbehalten." % rollback_tid)
+            log(logpfad, ["FEHLER: Rollback fuer 'create' ('%s') abgelehnt" % rollback_tid])
+            return 1
+
+        previous = letzter.get("previousValues")
+        if not isinstance(previous, dict):
+            print("FEHLER: Fuer '%s' existiert kein gespeicherter Vorzustand (previousValues)." % rollback_tid)
+            log(logpfad, ["FEHLER: Rollback fuer '%s' abgelehnt (keine previousValues)" % rollback_tid])
+            return 1
+
+        if rollback_tid not in nach_id:
+            print("FEHLER: Aufgabe '%s' existiert nicht mehr in der Registry." % rollback_tid)
+            log(logpfad, ["FEHLER: Rollback fuer '%s' abgelehnt (nicht in Registry)" % rollback_tid])
+            return 1
+
+        eintrag = nach_id[rollback_tid]
+        ist_werte = {k: eintrag.get(k) for k in previous}
+        meldungen = []
+
+        if ist_werte == previous:
+            msg = "HINWEIS (%s): '%s' steht bereits auf den Werten des Vorzustands (%s)" % (letzter.get("requestedBy", "?"), rollback_tid, previous)
+            meldungen.append(msg)
+            print(msg)
+            if a.report:
+                schreibe_bericht(a.report, reg_pfad, care, pending_pfad, app_laeuft, "rollback", meldungen)
+            return 0
+
+        if a.dry_run:
+            msg = "DRY-RUN rollback %s: %s -> %s" % (rollback_tid, ist_werte, previous)
+            meldungen.append(msg)
+            print(msg)
+            if a.report:
+                schreibe_bericht(a.report, reg_pfad, care, pending_pfad, app_laeuft, "rollback dry-run", meldungen)
+            return 0
+
+        shutil.copyfile(reg_pfad, reg_pfad + ".backup-" + time.strftime("%Y%m%d-%H%M%S"))
+        eintrag.update(previous)
+        schreibe(reg_pfad, reg)
+        msg = "ROLLBACK ANGEWANDT (%s): %s %s -> %s" % (letzter.get("requestedBy", "?"), rollback_tid, ist_werte, previous)
+        meldungen.append(msg)
+        log(logpfad, [msg])
+        print(msg)
+        if a.report:
+            schreibe_bericht(a.report, reg_pfad, care, pending_pfad, app_laeuft, "rollback", meldungen)
+        return 0
+
+    pend = lade(pending_pfad, {"pending": []})
+    if pend is None or not isinstance(pend, dict) or "pending" not in pend or not isinstance(pend.get("pending"), list):
+        print("FEHLER: %s ist kein gueltiges JSON oder unerwartetes Format (muss JSON-Objekt mit 'pending'-Liste sein) - nichts geaendert." % pending_pfad)
+        log(logpfad, ["FEHLER: pending-tasks.json ist kein gueltiges JSON oder unerwartetes Format - nichts geaendert."])
+        return 1
+    wuensche = pend["pending"]
 
     if a.status:
         print("Registry:         %s" % reg_pfad)
         print("Offene Wuensche:  %d" % len(wuensche))
         for w in wuensche:
-            print("  - [%s] %s %s (von %s)" % (w.get("op", "set"), w.get("taskId"),
-                                               w.get("fields"), w.get("requestedBy")))
-        if not a.ignore_app_state:
-            print("Desktop-App:      %s" % ("laeuft" if pfade.app_laeuft() else "geschlossen"))
+            if isinstance(w, dict):
+                print("  - [%s] %s %s (von %s)" % (w.get("op", "set"), w.get("taskId"),
+                                                   w.get("fields"), w.get("requestedBy")))
+            else:
+                print("  - [ungueltig] Kein JSON-Objekt")
+        print("Desktop-App:      %s" % ("laeuft" if app_laeuft else "geschlossen"))
         return 0
 
     if not wuensche:
         print("Keine offenen Wuensche.")
+        if a.report:
+            schreibe_bericht(a.report, reg_pfad, care, pending_pfad, app_laeuft, "no pending", ["Keine offenen Wuensche."])
         return 0
 
-    if not a.ignore_app_state and pfade.app_laeuft():
+    if not a.ignore_app_state and app_laeuft:
         print("Desktop-App laeuft - nichts geaendert (%d Wuensche warten)." % len(wuensche))
+        if a.report:
+            schreibe_bericht(a.report, reg_pfad, care, pending_pfad, app_laeuft, "app running", ["Desktop-App laeuft - Execution pausiert."])
         return 0
-
-    reg = lade(reg_pfad, None)
-    if not reg or "scheduledTasks" not in reg:
-        print("FEHLER: Registry unlesbar oder unerwartetes Format: %s" % reg_pfad)
-        log(logpfad, ["FEHLER: Registry unlesbar: %s" % reg_pfad])
-        return 1
-    nach_id = {t.get("id"): t for t in reg["scheduledTasks"]}
 
     meldungen, offen, erledigt = [], [], []
     for w in wuensche:
+        if not isinstance(w, dict):
+            meldungen.append("ABGELEHNT: Ungueltiger Wunsch-Eintrag (kein JSON-Objekt)")
+            continue
         op = w.get("op", "set")
         wer = w.get("requestedBy", "?")
 
@@ -245,7 +357,7 @@ def main():
         ok, meldung = (pruefer(w, nach_id) if op == "set"
                        else pruefer(w, nach_id, scheduled_dir))
         if not ok:
-            meldungen.append(meldung)      # abgelehnt: mit Grund protokolliert, nicht still
+            meldungen.append(meldung)
             continue
 
         tid, felder = w["taskId"], w.get("fields") or {}
@@ -286,7 +398,7 @@ def main():
                 eintrag["model"] = felder["model"]
             reg["scheduledTasks"].append(eintrag)
             nach_id[tid] = eintrag
-            w["previousValues"] = None     # es gab keinen Vorzustand
+            w["previousValues"] = None
             meldungen.append("ANGELEGT (%s): %s (%s, Auftragstext %s)%s"
                              % (wer, tid, felder["cronExpression"], skill_pfad,
                                 (" [%s]" % w["reason"]) if w.get("reason") else ""))
@@ -298,10 +410,8 @@ def main():
         shutil.copyfile(reg_pfad, reg_pfad + ".backup-" + time.strftime("%Y%m%d-%H%M%S"))
         schreibe(reg_pfad, reg)
 
-        # Verifikation: erneut lesen und vergleichen. Ohne diesen Schritt wuerde ein
-        # Rueckschreiben der App unbemerkt bleiben.
         kontrolle = lade(reg_pfad, {}) or {}
-        k_nach_id = {t.get("id"): t for t in kontrolle.get("scheduledTasks", [])}
+        k_nach_id = {t.get("id"): t for t in kontrolle.get("scheduledTasks", []) if isinstance(t, dict) and isinstance(t.get("id"), str)}
         for w in erledigt:
             ist = k_nach_id.get(w["taskId"])
             if ist is None:
@@ -314,6 +424,8 @@ def main():
                                  % (w["taskId"], abweichung))
 
         hist = lade(applied_pfad, {"applied": []}) or {"applied": []}
+        if not isinstance(hist, dict) or "applied" not in hist or not isinstance(hist.get("applied"), list):
+            hist = {"applied": []}
         hist.setdefault("applied", []).extend(erledigt)
         schreibe(applied_pfad, hist)
 
@@ -323,6 +435,10 @@ def main():
     log(logpfad, meldungen)
     for m in meldungen:
         print(m)
+
+    if a.report:
+        schreibe_bericht(a.report, reg_pfad, care, pending_pfad, app_laeuft, "dry-run" if a.dry_run else "normal", meldungen)
+
     if erledigt:
         print("\nHinweis: Die App liest die Registry beim Start. Neu angelegte oder geaenderte "
               "Aufgaben erscheinen erst nach dem naechsten Start der Desktop-App.")

@@ -53,6 +53,8 @@ flowchart TD
     class E,F warning;
 ```
 
+Sprache / Language: **Deutsch (Kanonisch)** | [English](README_en.md)
+
 ---
 
 ## Das Problem
