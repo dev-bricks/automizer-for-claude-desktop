@@ -14,11 +14,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `README_de.md` for German documentation parity.
 
 ### Changed
+- Fixed unused `pytest` import in `tests/test_automizer.py` (`ruff check` 100% clean).
+- Synchronized Pytest test badges in `README.md` & `README_de.md` (12/12 passed).
+- Updated `llms.txt` verification timestamp to `2026-08-04`.
 - Standardized `README.md` with Shields.io badges, GFM alert callout boxes, and Mermaid architecture diagram.
 - Updated documentation and verification timestamps (`2026-08-01`).
 - Aligned `README_de.md` layout, added missing banner graphic, and fixed section header typography.
-- Synchronized Pytest test badges in `README.md` & `README_de.md` (5/5 passed).
-- Verified 5/5 Pytest unit tests, compileall & git status cleanliness.
+- Verified 12/12 Pytest unit tests, ruff check & git status cleanliness.
 
 ## [1.0.0] - 2026-07-20
 - Initial import and public repository setup.

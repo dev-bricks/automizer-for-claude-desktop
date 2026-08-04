@@ -4,7 +4,6 @@
 import os
 import json
 import tempfile
-import pytest
 
 import claude_desktop_paths as pfade
 
