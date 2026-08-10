@@ -80,6 +80,10 @@ def main():
         "reason": a.reason,
         "requestedBy": a.by,
         "requestedAt": time.strftime("%Y-%m-%dT%H:%M:%S"),
+        # Seit 2026-08-10 fuehren beide Hosts dieselben Aufgaben-Slugs; ohne diese
+        # Zuordnung wendet der erste Merger, der laeuft, die Wuensche des anderen
+        # Hosts auf die eigene Registry an. apply_pending_tasks.py wertet das Feld aus.
+        "host": (os.environ.get("COMPUTERNAME") or "").strip(),
     }
 
     if a.op == "create":

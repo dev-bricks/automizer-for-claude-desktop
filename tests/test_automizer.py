@@ -93,3 +93,32 @@ def test_registry_file_structure():
     finally:
         if os.path.exists(tmp_path):
             os.remove(tmp_path)
+
+
+def test_wunsch_host_zuordnung(monkeypatch):
+    """A wish tagged with a foreign host must not be applied locally.
+
+    Both hosts share pending-tasks.json via OneDrive but keep their registries
+    locally. Since both run the same task slugs, "the task exists here" no longer
+    proves the wish is ours - the host tag does.
+    """
+    import apply_pending_tasks as apt
+
+    monkeypatch.setattr(apt, "LOKALER_HOST", "WORKSTATION-LG")
+
+    assert apt.ist_fuer_fremden_host({"taskId": "x", "host": "ASUS-GEI"}) is True
+    assert apt.ist_fuer_fremden_host({"taskId": "x", "host": "workstation-lg"}) is False
+    # Legacy wishes without the field keep their old behaviour.
+    assert apt.ist_fuer_fremden_host({"taskId": "x"}) is False
+    assert apt.ist_fuer_fremden_host({"taskId": "x", "host": "   "}) is False
+    assert apt.ist_fuer_fremden_host("kein dict") is False
+
+
+def test_wunsch_host_fail_closed(monkeypatch):
+    """Unknown own hostname: leave tagged wishes alone rather than consume them."""
+    import apply_pending_tasks as apt
+
+    monkeypatch.setattr(apt, "LOKALER_HOST", "")
+
+    assert apt.ist_fuer_fremden_host({"taskId": "x", "host": "ASUS-GEI"}) is True
+    assert apt.ist_fuer_fremden_host({"taskId": "x"}) is False

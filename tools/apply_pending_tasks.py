@@ -119,6 +119,33 @@ def ist_fremder_host(w, nach_id):
             and w["taskId"] not in nach_id)
 
 
+LOKALER_HOST = (os.environ.get("COMPUTERNAME") or "").strip().upper()
+
+
+def ist_fuer_fremden_host(w):
+    """True, wenn ein Wunsch ausdruecklich einem ANDEREN Host zugeordnet ist.
+
+    ist_fremder_host() oben erkennt Unzustaendigkeit nur daran, dass es die Aufgabe
+    hier nicht gibt. Das genuegte, solange jeder Slug nur auf einem Host registriert
+    war. Seit dem 2026-08-10 fuehrt WORKSTATION-LG denselben Pflegeverbund wie
+    ASUS-GEI - damit ist jeder Wunsch des Nachbarhosts hier formal "zustaendig" und
+    wuerde angewendet, obwohl er gegen dessen Belegungsprofil gemessen wurde.
+
+    Deshalb das Feld "host" im Wunsch (queue_request.py setzt es). Wuensche OHNE das
+    Feld verhalten sich wie bisher - Altbestand bleibt gueltig. Ist der eigene
+    Hostname nicht ermittelbar, wird fail-closed entschieden: lieber stehen lassen
+    als den Wunsch des anderen Hosts verbrauchen.
+    """
+    if not isinstance(w, dict):
+        return False
+    h = w.get("host")
+    if not isinstance(h, str) or not h.strip():
+        return False
+    if not LOKALER_HOST:
+        return True
+    return h.strip().upper() != LOKALER_HOST
+
+
 def pruefe_set(w, nach_id):
     if not isinstance(w, dict):
         return False, "ABGELEHNT: Ungueltiger Wunsch-Eintrag (kein JSON-Objekt)"
@@ -376,6 +403,13 @@ def main():
         if op not in ("set", "create"):
             meldungen.append("ABGELEHNT (%s): unbekannte Operation '%s' - erlaubt sind 'set' "
                              "und 'create'" % (wer, op))
+            continue
+
+        if ist_fuer_fremden_host(w):
+            meldungen.append("UEBERGANGEN (%s): Wunsch gehoert Host '%s', hier laeuft '%s' - "
+                             "bleibt fuer den zustaendigen Host stehen"
+                             % (wer, w.get("host"), LOKALER_HOST or "?"))
+            offen.append(w)
             continue
 
         pruefer = pruefe_set if op == "set" else pruefe_create
