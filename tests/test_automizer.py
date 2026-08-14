@@ -122,3 +122,23 @@ def test_wunsch_host_fail_closed(monkeypatch):
 
     assert apt.ist_fuer_fremden_host({"taskId": "x", "host": "ASUS-GEI"}) is True
     assert apt.ist_fuer_fremden_host({"taskId": "x"}) is False
+
+
+def test_diagnose_output():
+    """Verify diagnose returns formatted string with key system properties."""
+    diag = pfade.diagnose()
+    assert isinstance(diag, str)
+    assert "Plattform:" in diag
+    assert "Dokumente:" in diag
+    assert "Scheduled:" in diag
+    assert "_care:" in diag
+    assert "Registry:" in diag
+    assert "Desktop-App:" in diag
+
+
+def test_app_daten_wurzeln():
+    """Verify app data root list detection returns candidate directory list."""
+    roots = pfade._app_daten_wurzeln()
+    assert isinstance(roots, list)
+    assert len(roots) >= 1
+    assert all(isinstance(r, str) for r in roots)

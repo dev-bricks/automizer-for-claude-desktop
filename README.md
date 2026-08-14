@@ -2,25 +2,25 @@
 
 <img src="assets/banner.png" width="100%" alt="Automizer For Claude Desktop banner">
 
-
 [![Python 3.8+](https://img.shields.io/badge/python-3.8%2B-blue.svg)](https://www.python.org/downloads/)
+[![Version: 1.0.1](https://img.shields.io/badge/version-1.0.1-blue.svg)](pyproject.toml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Ecosystem: dev-bricks](https://img.shields.io/badge/Ecosystem-dev--bricks-blueviolet.svg)](https://github.com/dev-bricks)
 [![Umbrella: open-bricks](https://img.shields.io/badge/Umbrella-open--bricks-indigo.svg)](https://github.com/open-bricks)
-[![Pytest](https://img.shields.io/badge/Pytest-12%20passed-brightgreen.svg)](tests/test_automizer.py)
+[![Pytest](https://img.shields.io/badge/Pytest-16%20passed-brightgreen.svg)](tests/)
 [![LLM Context](https://img.shields.io/badge/LLM%20Context-llms.txt-success.svg)](llms.txt)
 
-**Geplante Aufgaben der Claude-Desktop-App zuverlässig ändern und anlegen — aus der App heraus, von außen, oder bei geschlossener App.**
+**Reliably modify, queue, and manage scheduled tasks for the Claude Desktop App — from inside the app, externally via CLI, or when the app is closed.**
 
-[Deutsch](README_de.md) | English
+Language: **English** | [Deutsch](README_de.md)
 
 > [!NOTE]
-> **Maschinenlesbarer Kontext:** Eine kompakte Projektübersicht für LLM-Agenten ist unter [`llms.txt`](llms.txt) verfügbar.
+> **AI / LLM Agent Ready:** A structured, machine-readable overview for LLM agents is available at [`llms.txt`](llms.txt).
 
 > [!IMPORTANT]
-> **Inoffizielles Werkzeug.** Dieses Projekt ist ein unabhängiges Community-Tool und steht in keiner Verbindung zu Anthropic. Es wird von Anthropic weder herausgegeben noch unterstützt oder geprüft. „Claude" und „Claude Desktop" sind Bezeichnungen von Anthropic und werden hier ausschließlich beschreibend verwendet.
+> **Unofficial Community Tool.** This project is an independent community utility and is not affiliated with, endorsed, or audited by Anthropic. "Claude" and "Claude Desktop" are trademarks of Anthropic and are used here solely for descriptive purposes to identify compatible software.
 >
-> Es liest und schreibt lokale Dateien, die die Desktop-App anlegt. Deren Format ist nicht dokumentiert und kann sich mit jeder Version ändern. Vor jedem Schreiben wird eine Sicherung angelegt. Nutzung auf eigene Verantwortung.
+> It reads and writes local configuration files created by the Desktop App. Their format is undocumented and subject to unannounced changes across app releases. Backups are automatically created before every write operation. Use at your own risk.
 
 ---
 
@@ -53,154 +53,134 @@ flowchart TD
     class E,F warning;
 ```
 
-Sprache / Language: **Deutsch (Kanonisch)** | [English](README_en.md)
+---
+
+## The Challenge
+
+The Claude Desktop App manages its scheduled tasks across two separate storage locations:
+
+| Component | Path | Description |
+|---|---|---|
+| **Task Prompt** | `<Documents>/Claude/Scheduled/<slug>/SKILL.md` | Contains the prompt instructions to execute |
+| **Task Registry** | `<AppData>/Claude/local-agent-mode-sessions/<session>/<account>/scheduled-tasks.json` | Stores schedules (`cronExpression`), enabled state, and permissions |
+
+Both components are required for a functional task. Simply creating the prompt folder is insufficient: without a corresponding registry entry and valid `cronExpression`, the task will never trigger and won't appear in the app's schedule overview.
+
+Crucially: **The Desktop App maintains the task registry in memory and writes it back to disk upon session exit.** Any direct modifications made to `scheduled-tasks.json` while the app is active will be silently overwritten and lost without warning.
 
 ---
 
-## Das Problem
+## The Solution
 
-Die Desktop-App verwaltet ihre geplanten Aufgaben in zwei getrennten Ablagen:
-
-| Was | Wo |
-|---|---|
-| **Auftragstext** — was zu tun ist | `<Dokumente>/Claude/Scheduled/<slug>/SKILL.md` |
-| **Aufgabenliste** — wann es zu tun ist | `<App-Daten>/Claude/local-agent-mode-sessions/<session>/<account>/scheduled-tasks.json` |
-
-Beides zusammen ergibt erst eine laufende Aufgabe. Nur den Ordner anzulegen genügt nicht:
-Ohne Eintrag in der Aufgabenliste — und ohne `cronExpression` darin — läuft die Aufgabe nie und erscheint nicht einmal in der Übersicht der App.
-
-Der eigentliche Stolperstein liegt aber woanders: **Die App hält die Aufgabenliste im Speicher und schreibt sie beim Ende eines Laufs komplett neu.** Wer sie ändert, während die App läuft, verliert seine Änderung wieder — ohne Fehlermeldung. Das trifft Läufe innerhalb der App genauso wie Werkzeuge von außen. Man merkt es erst, wenn die Aufgabe weiterhin zur alten Zeit startet.
-
-## Die Lösung
-
-Wünsche werden vom Schreiben entkoppelt:
+Automizer decouples change requests from disk-write operations through a staged queue:
 
 ```
-  Wunsch schreiben (jederzeit, von innen wie von außen)
+  Queue Request (anytime, in-app or from external agents)
             │
             ▼
-   pending-tasks.json ──▶ apply_pending_tasks.py ──▶ Läuft die App?
-                                                       │
-                                       ja ─────────────┤  nichts tun, später erneut
-                                                       │
-                                      nein ────────────┴─▶ Backup → schreiben →
-                                                            nachlesen → protokollieren
+    pending-tasks.json ──▶ apply_pending_tasks.py ──▶ Is Claude Desktop Running?
+                                                        │
+                                        yes ────────────┤  skip and retry next cycle
+                                                        │
+                                        no ─────────────┴─▶ Backup → Write →
+                                                             Verify → Log Report
 ```
 
-Ein Wunsch wirkt also **verzögert**. Das ist kein Mangel, sondern der Punkt: Er geht nicht verloren, und er wird nachprüfbar angewandt.
+Modifications take effect with a **deliberate delayed execution**. This prevents silent overwrites, avoids race conditions, and provides an auditable history of applied changes.
 
 ---
 
-## Die drei Betriebsarten
+## Three Operating Modes
 
-| # | Lage | Was möglich ist | Prompt |
+| Mode | Context | Workflow | Prompt Template |
 |---|---|---|---|
-| 1 | LLM läuft **in** der App | Wunsch hinterlegen (verzögert) | [`prompts/01_in-der-app.md`](prompts/01_in-der-app.md) |
-| 2 | Zugriff **von außen**, App läuft | Wunsch einreihen per CLI (verzögert) | [`prompts/02_von-aussen-app-laeuft.md`](prompts/02_von-aussen-app-laeuft.md) |
-| 3 | App ist **geschlossen** | direkt anwenden (sofort) | [`prompts/03_app-geschlossen.md`](prompts/03_app-geschlossen.md) |
-
-Die Prompt-Dateien sind zum Kopieren gedacht — in den Auftragstext einer Aufgabe (1) oder in den Kontext eines externen Agenten (2, 3).
+| **1. In-App** | LLM running inside Claude Desktop | Append request to `pending-tasks.json` (delayed) | [`prompts/01_in-app_en.md`](prompts/01_in-app_en.md) |
+| **2. External (Active)** | External CLI / Agent, app is running | Enqueue request via `queue_request.py` (delayed) | [`prompts/02_from-outside-app-running_en.md`](prompts/02_from-outside-app-running_en.md) |
+| **3. App Closed** | App is verified closed | Execute `apply_pending_tasks.py` (immediate) | [`prompts/03_app-closed_en.md`](prompts/03_app-closed_en.md) |
 
 ---
 
-## Installation
+## Quickstart & Installation
 
-Voraussetzung: Python 3.8+. Keine Abhängigkeiten außerhalb der Standardbibliothek.
+Prerequisites: **Python 3.8+**. Zero third-party dependencies (standard library only).
 
 ```bash
-# 1. Pfade prüfen — findet das Werkzeug die Ablagen dieser Installation?
+# 1. Verify path detection across local installation
 python tools/apply_pending_tasks.py --paths
 
-# 2. Merger als stündlichen, fensterlosen Windows-Task registrieren (kein Admin nötig)
+# 2. Register hourly background merger task (Windows Scheduled Task, no admin needed)
 powershell -ExecutionPolicy Bypass -File tools/install_merger_task.ps1
 
-# 3. Abnahme
-#    a) bei geöffneter App auslösen -> es darf sich nichts ändern
-#    b) App schließen, erneut auslösen -> Wunsch wird angewandt
-#    c) in beiden Fällen darf kein Fenster aufblitzen
+# 3. Acceptance test:
+#    a) Trigger while app is open -> changes deferred
+#    b) Close app and re-trigger -> changes safely merged
+#    c) Zero visible terminal flicker in background mode
 ```
 
-Ohne Schritt 2 funktioniert alles weiterhin — die Wünsche werden dann nur nicht von selbst angewandt, sondern erst beim manuellen `python tools/apply_pending_tasks.py`.
+> [!TIP]
+> Always execute the installer via `-File tools/install_merger_task.ps1` rather than pasting snippet contents into PowerShell, ensuring `$PSScriptRoot` resolves reliably.
 
-Den Installer **per `-File` aufrufen**, nicht den Inhalt in eine Konsole einfügen: Sonst ist `$PSScriptRoot` leer, der Task wird mit leerem Argument registriert und läuft stündlich ins Nichts. Prüfen lässt sich das mit:
+### Windowless Background Execution
 
-```powershell
-(Get-ScheduledTask -TaskName "claude-desktop-pending-merger").Actions[0].Arguments
-```
-
-### Warum ein VBS-Wrapper
-
-„Fensterlos" heißt hier: versteckte Konsole, nicht gar keine. Ein nacktes `pythonw` genügt nicht, sobald Unterprozesse starten — die allozieren sich sonst eigene, sichtbare Fenster. Der Wrapper startet über `WScript.Shell.Run(cmd, 0, False)`, im Python-Teil sorgt `CREATE_NO_WINDOW` für den Rest.
+Background execution uses `tools/run_apply_pending_hidden.vbs` wrapping `apply_pending_tasks.py` with `WScript.Shell.Run(cmd, 0, False)` and `subprocess.CREATE_NO_WINDOW` to prevent disruptive console popups.
 
 ---
 
-## Werkzeuge
+## Tooling Overview
 
-| Datei | Zweck |
+| Script | Purpose |
 |---|---|
-| `tools/claude_desktop_paths.py` | Findet Dokumente-Ordner, Aufgabenliste und App-Zustand — ohne zu raten |
-| `tools/queue_request.py` | Wunsch einreihen (`set` / `create`), ohne JSON von Hand |
-| `tools/apply_pending_tasks.py` | Der Merger: prüft, schreibt, verifiziert, protokolliert |
-| `tools/install_merger_task.ps1` | Registriert den stündlichen Windows-Task |
-| `tools/run_apply_pending_hidden.vbs` | Fensterloser Start des Mergers |
+| [`tools/claude_desktop_paths.py`](tools/claude_desktop_paths.py) | Dynamic path resolution for Documents, registry files, and process detection |
+| [`tools/queue_request.py`](tools/queue_request.py) | CLI utility for enqueueing `set` or `create` requests into pending queue |
+| [`tools/apply_pending_tasks.py`](tools/apply_pending_tasks.py) | Safe merger engine: verifies app state, backs up registry, merges changes, logs |
+| [`tools/install_merger_task.ps1`](tools/install_merger_task.ps1) | PowerShell installer registering scheduled background merger |
+| [`tools/run_apply_pending_hidden.vbs`](tools/run_apply_pending_hidden.vbs) | Windowless VBScript launch wrapper |
 
-### Warum Pfade nicht geraten werden
+### Robust Path Resolution
 
-Der Dokumente-Ordner ist **nicht** verlässlich `%USERPROFILE%\Documents`. Wird er nach OneDrive umgeleitet (Known-Folder-Move), zeigt der Shell-Ordner „Personal" woanders hin — ein fest verdrahteter Pfad findet die Aufgaben dann nicht. Deshalb wird er aus der Registry gelesen. Die GUIDs im Pfad der Aufgabenliste wechseln ebenfalls; dort wird gesucht und die zuletzt geschriebene Datei genommen.
-
----
-
-## Was das Werkzeug bewusst nicht tut
-
-- **Löschen.** Aufgaben zu entfernen bleibt dem Menschen in der App. Ein versehentlich gelöschter Auftragstext ist nicht wiederherstellbar.
-- **`filePath` ändern.** Sonst ließe sich ein Eintrag auf eine beliebige fremde Datei umbiegen. Das Feld steht nicht auf der Whitelist.
-- **Zeitpläne erfinden.** Wo keiner gesetzt war, wird gemeldet statt geraten.
-- **Im Zweifel schreiben.** Lässt sich der App-Zustand nicht ermitteln, gilt „läuft" — lieber ein Lauf ausgelassen als in eine offene App hineingeschrieben.
-
-### Sicherungen
-
-1. **App-Erkennung über den Pfad**, nicht über den Prozessnamen. Auf Windows heißt die Claude-Code-CLI ebenfalls `claude.exe`; ein reiner Namensfilter löst Fehlalarm aus.
-2. **Feld-Whitelist:** nur `cronExpression`, `enabled`, `model`, `userSelectedFolders`, `permissionMode`, `disableJitter`.
-3. **Selbstschutz:** Ein Wunsch, der eine Pflege-Aufgabe deaktiviert, wird abgelehnt — sonst schaltet sich die Pflege selbst ab. Präfix über `CDA_SELF_PROTECT_PREFIX` einstellbar (leer = aus).
-4. **Backup vor jedem Schreiben**, **Nachlesen danach** — Abweichungen werden als WARNUNG protokolliert.
-5. **`previousValues`** in der Historie — ohne Vorzustand kein Rollback.
-6. **Abgelehnte Wünsche verschwinden nicht still**, sondern mit Grund im Log.
+On Windows, the Documents folder may be redirected to OneDrive (Known-Folder-Move). Automizer queries the Windows User Shell Folders registry key (`Personal`) rather than guessing `%USERPROFILE%\Documents`. Session GUIDs in AppData are scanned dynamically to select the latest active session.
 
 ---
 
-## Optional: der Self-Administration-Skill
+## Safety Guarantees & Safeguards
 
-Dieses Repo liefert zwei Dinge, die unabhängig voneinander nutzbar sind:
-
-**Die Mechanik** (`tools/`, `prompts/`) — Wünsche einreihen und sicher anwenden. Für sich allein nutzbar: Ein Mensch oder ein beliebiger Agent kann damit Aufgaben ändern und anlegen.
-
-**Den Skill** ([`skill/self-administration-of-scheduled-tasks/`](skill/self-administration-of-scheduled-tasks/SKILL.md)) — eine Anleitung für ein LLM, wie es sich einen *selbstpflegenden* Kern geplanter Aufgaben einrichtet: fünf schmale Aufsichtsrollen mit je einer Stellschraube (Bestand, Auftragstexte, Frequenz, Kontingent, Systemabgleich), ein gemeinsames Gedächtnis und fertige Prompttexte. Der Skill setzt die Mechanik voraus; die Mechanik läuft auch ohne ihn.
-
-Wer nur gelegentlich einen Zeitplan ändern will, braucht den Skill nicht. Wer möchte, dass die Automationen sich selbst überwachen, installiert ihn zusätzlich.
+1. **Path-Based Process Detection:** Distinguishes the Claude Desktop Windows Store app (`*WindowsApps*`) from the Claude Code CLI (`claude.exe`) to prevent false-positive lockouts.
+2. **Field Whitelisting:** Strict schema whitelist (`cronExpression`, `enabled`, `model`, `userSelectedFolders`, `permissionMode`, `disableJitter`).
+3. **Self-Protection Guard:** Rejects requests attempting to disable maintenance tasks (prefix customizable via `CDA_SELF_PROTECT_PREFIX`).
+4. **Pre-Write Backups & Post-Write Verification:** Automatic snapshot created before every modification, followed by immediate readback verification.
+5. **Fail-Closed Cross-Host Isolation:** Pending wishes tagged with foreign host identifiers in multi-device OneDrive setups are preserved rather than consumed locally.
+6. **No Silent Drops:** Rejected or malformed wishes are logged with clear diagnostic rationale.
 
 ---
 
-## Begriffe
+## Optional: Self-Administration Skill
 
-| Begriff | Bedeutung |
+This repository provides two independent layers:
+
+1. **The Core Engine** (`tools/`, `prompts/`) — Queueing mechanism and atomic merger for humans and external agents.
+2. **The Self-Administration Skill** ([`skill/self-administration-of-scheduled-tasks/SKILL.md`](skill/self-administration-of-scheduled-tasks/SKILL.md)) — An instruction framework enabling Claude Desktop tasks to maintain, monitor, and optimize themselves through five modular supervisory roles.
+
+---
+
+## Terminology
+
+| Term | Definition |
 |---|---|
-| **Slug** | Kurzname einer Aufgabe = Ordnername unter `Scheduled\` = `id` in der Aufgabenliste |
-| **Wunsch** | Ein Eintrag in `pending-tasks.json`, noch nicht angewandt |
-| **Merger** | `apply_pending_tasks.py` — wendet Wünsche an, wenn die App zu ist |
-| **Registry** | Hier: die Aufgabenliste `scheduled-tasks.json` (nicht die Windows-Registry) |
+| **Slug** | Short task identifier matching folder name under `Scheduled/<slug>/` and `id` in the task registry |
+| **Wish / Request** | A pending mutation record in `pending-tasks.json` awaiting application |
+| **Merger** | `apply_pending_tasks.py` engine applying queued requests when the app is inactive |
+| **Registry** | The `scheduled-tasks.json` configuration store inside Claude AppData |
 
-## Daten und Datenschutz
+---
 
-Das Werkzeug arbeitet **ausschließlich lokal**. Es sendet nichts über das Netz — weder Telemetrie noch Inhalte — und benötigt keine Zugangsdaten.
+## Privacy & Local Execution
 
-Es liest und schreibt drei Dinge auf demselben Rechner: die Aufgabenliste der App, die Auftragstexte unter `Scheduled/` und seine eigenen Dateien unter `_care/`. Diese Dateien können beschreiben, welche Ordner eine Aufgabe lesen darf, und der Auftragstext kann beliebige eigene Inhalte enthalten.
+Automizer operates **100% locally**. It never communicates over external networks, sends zero telemetry, and requires no API keys or credentials.
 
-Daraus folgt für den Betrieb: **`pending-tasks.json`, `applied-tasks.json` und Logdateien gehören nicht in ein Repository** — sie enthalten die Pfade und Absichten des jeweiligen Systems. Die mitgelieferte `.gitignore` schließt sie deshalb aus.
+`pending-tasks.json`, `applied-tasks.json`, and local logs are strictly excluded via `.gitignore` to safeguard system paths and custom prompt instructions.
 
-## Lizenz und Herkunft
+---
 
-MIT — siehe [LICENSE](LICENSE). Sie erfasst alles in diesem Repository: Code, Prompttexte und Dokumentation.
+## License
 
-**Drittbestandteile:** keine. Die Werkzeuge nutzen nur die Python-Standardbibliothek sowie bordeigene Windows-Programme (`wscript`, `powershell`, Aufgabenplanung).
-
-**Entstehung:** Code, Prompts und Dokumentation sind unter Einsatz von LLMs entstanden und anschließend von Hand geprüft und gegen eine echte Installation getestet. Der Ablauf (Wunschkanal statt Direktschreiben) geht auf einen empirischen Befund zurück: Die App setzte eine direkt geschriebene Änderung nach dem nächsten Lauf-Ende zurück.
+Released under the [MIT License](LICENSE).

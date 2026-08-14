@@ -5,22 +5,16 @@ All notable changes to `dev-bricks/automizer-for-claude-desktop` will be documen
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.0.1] - 2026-08-14
 
 ### Added
-- Added `llms.txt` for machine-readable context and LLM agent integration.
-- Added PEP 621 `pyproject.toml` configuration for Pytest test runner and module packaging.
-- Added comprehensive Pytest suite `tests/test_automizer.py` for path resolution, queueing, and merger validation.
-- Added `README_de.md` for German documentation parity.
+- Expanded unit test suite `tests/test_automizer.py` with test coverage for `claude_desktop_paths.diagnose()` and `_app_daten_wurzeln()`, reaching 16 total unit tests (100% pass rate).
+- Full English canonical `README.md` and complete German `README_de.md` documentation parity with bilingual language switchers, updated Shields.io status badges, GFM callout boxes, and architecture Mermaid diagrams.
 
 ### Changed
-- Fixed unused `pytest` import in `tests/test_automizer.py` (`ruff check` 100% clean).
-- Synchronized Pytest test badges in `README.md` & `README_de.md` (12/12 passed).
-- Updated `llms.txt` verification timestamp to `2026-08-04`.
-- Standardized `README.md` with Shields.io badges, GFM alert callout boxes, and Mermaid architecture diagram.
-- Updated documentation and verification timestamps (`2026-08-01`).
-- Aligned `README_de.md` layout, added missing banner graphic, and fixed section header typography.
-- Verified 12/12 Pytest unit tests, ruff check & git status cleanliness.
+- Synchronized Pytest test badges in `README.md` and `README_de.md` from 12 to 16 passed tests.
+- Updated `llms.txt` AI/LLM context index timestamp to `2026-08-14`, including canonical repository URLs, keyword index, and test verification count.
+- Added version badges (`v1.0.1`) across documentation files.
 
 ## [1.0.0] - 2026-07-20
 - Initial import and public repository setup.

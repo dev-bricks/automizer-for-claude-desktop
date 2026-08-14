@@ -1,33 +1,58 @@
 # Automizer for Claude Desktop
 
 > Machine-readable context file for LLM agents working with `automizer-for-claude-desktop`.
-> Last checked: 2026-08-04
+> Canonical Repository: https://github.com/dev-bricks/automizer-for-claude-desktop
+> Ecosystem: dev-bricks | Umbrella: open-bricks
+> License: MIT
+> Last checked: 2026-08-14
+> Test status: 16 passed (Pytest 9.1+)
 
-## Overview
-`automizer-for-claude-desktop` is a utility tool designed to reliably modify and queue scheduled tasks for the official Claude Desktop app on Windows (and macOS/Linux supported paths).
+## Overview & Architecture
+`automizer-for-claude-desktop` is a local utility designed to safely manage, queue, and modify scheduled tasks for the official Claude Desktop app on Windows (and macOS/Linux supported paths).
 
-Because the Claude Desktop app holds its task registry (`scheduled-tasks.json`) in memory and overwrites it upon session exit, direct modification while the app is running causes silent data loss. Automizer solves this by decoupling change requests into a pending queue (`_care/pending/pending-tasks.json`) and applying them atomically when the desktop app is closed.
+Because the Claude Desktop application maintains its internal task registry (`scheduled-tasks.json`) in memory and overwrites the file on session teardown, direct file edits made while the app is active are silently lost. Automizer resolves this concurrency challenge by decoupling mutation requests into a staging queue (`_care/pending/pending-tasks.json`) and applying them atomically when the desktop app is closed.
 
-## Repository Structure
-- `tools/claude_desktop_paths.py`: Path resolution helper for registry file (`scheduled-tasks.json`) and task prompt directory (`<Documents>/Claude/Scheduled/`). Handles Windows registry shell folder redirection (OneDrive Known-Folder-Move).
-- `tools/queue_request.py`: CLI tool for enqueueing task modification (`set`) or creation (`create`) requests.
-- `tools/apply_pending_tasks.py`: Merges queued pending tasks into `scheduled-tasks.json` with automatic backup and validation.
-- `tools/install_merger_task.ps1`: PowerShell script to register an hourly background task in Windows Task Scheduler.
-- `tools/run_apply_pending_hidden.vbs`: VBScript wrapper for windowless background execution.
-- `prompts/`: Standard prompt templates for agent context integration (in-app, external while running, app closed).
+## Repository Structure & Key Components
+- `tools/claude_desktop_paths.py`: Dynamic path resolution helper for the registry file (`scheduled-tasks.json`) and task prompt directory (`<Documents>/Claude/Scheduled/`). Reads the Windows User Shell Folders registry key (`Personal`) to support OneDrive Known-Folder-Move redirection.
+- `tools/queue_request.py`: CLI tool for enqueueing task modification (`set`) or creation (`create`) requests into `pending-tasks.json`.
+- `tools/apply_pending_tasks.py`: Atomic merger engine. Checks if Claude Desktop is running, creates timestamped pre-write backups, merges queued changes into `scheduled-tasks.json`, performs post-write readback validation, and logs results to `applied-tasks.json`.
+- `tools/install_merger_task.ps1`: PowerShell installer registering an hourly scheduled background task in Windows Task Scheduler.
+- `tools/run_apply_pending_hidden.vbs`: VBScript wrapper executing the merger in windowless mode (`CREATE_NO_WINDOW`) without console popups.
+- `prompts/`: Agent prompt templates:
+  - `prompts/01_in-app_en.md` / `01_in-der-app.md`: Prompt injection for in-app Claude agents to stage modifications.
+  - `prompts/02_from-outside-app-running_en.md` / `02_von-aussen-app-laeuft.md`: Instructions for external CLI agents when the app is active.
+  - `prompts/03_app-closed_en.md` / `03_app-geschlossen.md`: Instructions for immediate execution when the app is verified closed.
 - `skill/self-administration-of-scheduled-tasks/SKILL.md`: Claude Skill definition for automated self-management.
-- `tests/test_automizer.py`: Pytest suite verifying path resolution and queue operations.
+- `tests/test_automizer.py`: Pytest suite for platform detection, directory helpers, queue serialization, registry parsing, fail-closed cross-host handling, and path diagnostics.
+- `tests/test_apply_pending_tasks.py`: Pytest suite for permission mode validation, fail-closed handling, rollback commands, and dry-run report generation.
 
-## Key Concepts
-1. **Registry (`scheduled-tasks.json`)**: Contains task schedule, model choice, permissions, and cron expressions. Located in `%APPDATA%\Claude\local-agent-mode-sessions\<session>\<account>\scheduled-tasks.json`.
-2. **Task Prompt (`SKILL.md`)**: Contains the instruction body for the scheduled task. Located in `<Documents>/Claude/Scheduled/<slug>/SKILL.md`.
-3. **Pending Queue (`pending-tasks.json`)**: Stored in `<Documents>/Claude/Scheduled/_care/pending/pending-tasks.json`.
+## Key Operational Concepts
+1. **Task Registry (`scheduled-tasks.json`)**: Contains task metadata, schedule (`cronExpression`), enabled state, model selection, and permissions. Located at `%APPDATA%\Claude\local-agent-mode-sessions\<session>\<account>\scheduled-tasks.json`.
+2. **Task Prompt (`SKILL.md`)**: Contains the prompt instructions executed by Claude Desktop. Located at `<Documents>/Claude/Scheduled/<slug>/SKILL.md`.
+3. **Pending Queue (`pending-tasks.json`)**: Stored at `<Documents>/Claude/Scheduled/_care/pending/pending-tasks.json`.
+4. **History Log (`applied-tasks.json`)**: Stored at `<Documents>/Claude/Scheduled/_care/history/applied-tasks.json`.
 
-## Usage & Verification
+## Safety Constraints & Whitelisting
+- Process detection checks binary executable paths (`*WindowsApps*`) rather than simple process names, avoiding false collisions with the Claude Code CLI (`claude.exe`).
+- Permitted registry mutation fields: `cronExpression`, `enabled`, `model`, `userSelectedFolders`, `permissionMode`, `disableJitter`.
+- Disallowed mutations: Direct task deletion and arbitrary `filePath` reassignment.
+- Self-protection guard (`CDA_SELF_PROTECT_PREFIX`) blocks accidental deactivation of supervisory maintenance tasks.
+
+## Verification Commands
 ```bash
-# Verify path resolution
+# Verify path resolution across system
 python tools/apply_pending_tasks.py --paths
 
-# Run tests
+# Run comprehensive test suite
 pytest
+
+# Code style check
+ruff check .
 ```
+
+## Search Keywords & Discovery Phrases
+- Claude Desktop scheduled tasks automation
+- Claude Desktop scheduled-tasks.json manager
+- Windows scheduled task merger for Claude Desktop
+- Safe background task modifier Claude App
+- LLM agent task self-administration
