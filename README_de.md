@@ -3,11 +3,11 @@
 <img src="assets/banner.png" width="100%" alt="Automizer For Claude Desktop banner">
 
 [![Python 3.8+](https://img.shields.io/badge/python-3.8%2B-blue.svg)](https://www.python.org/downloads/)
-[![Version: 1.0.1](https://img.shields.io/badge/version-1.0.1-blue.svg)](pyproject.toml)
+[![Version: 1.0.2](https://img.shields.io/badge/version-1.0.2-blue.svg)](pyproject.toml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Ecosystem: dev-bricks](https://img.shields.io/badge/Ecosystem-dev--bricks-blueviolet.svg)](https://github.com/dev-bricks)
 [![Umbrella: open-bricks](https://img.shields.io/badge/Umbrella-open--bricks-indigo.svg)](https://github.com/open-bricks)
-[![Pytest](https://img.shields.io/badge/Pytest-16%20passed-brightgreen.svg)](tests/)
+[![Pytest](https://img.shields.io/badge/Pytest-21%20passed-brightgreen.svg)](tests/)
 [![LLM Context](https://img.shields.io/badge/LLM%20Context-llms.txt-success.svg)](llms.txt)
 
 **Geplante Aufgaben der Claude-Desktop-App zuverlässig ändern und anlegen — aus der App heraus, von außen, oder bei geschlossener App.**
@@ -196,6 +196,25 @@ Daraus folgt für den Betrieb: **`pending-tasks.json`, `applied-tasks.json` und 
 
 ---
 
+## Geschwister-Werkzeuge & Ökosystem
+
+`automizer-for-claude-desktop` ist Teil der [`dev-bricks`](https://github.com/dev-bricks)-Suite unter dem [`open-bricks`](https://github.com/open-bricks)-Dach:
+
+| Werkzeug | Schwerpunkt & Kurzbeschreibung |
+|---|---|
+| [`safe-start-for-codex`](https://github.com/dev-bricks/safe-start-for-codex) | Prozesswächter & Sicherheitsaufseher für autonome Programmier-Agenten |
+| [`companion-for-agy`](https://github.com/dev-bricks/companion-for-agy) | CLI-Begleiter und Sitzungskoordinator für Antigravity-Agenten |
+| [`DevCenter`](https://github.com/dev-bricks/DevCenter) | Zentrale Entwickler-Werkbank und Workspace-Orchestrierung |
+| [`CodeBox`](https://github.com/dev-bricks/CodeBox) | Lokaler Container für Code-Snippets und Entwicklungs-Assets |
+| [`automation-master`](https://github.com/dev-bricks/automation-master) | Einheitliche Multi-Agenten-Workflow-Planung und Orchestrierung |
+| [`MethodenAnalyser`](https://github.com/dev-bricks/MethodenAnalyser) | Statische Codeanalyse und Methodenextraktion |
+| [`coma`](https://github.com/ellmos-ai/coma) | Kooperative Multi-Agenten-Koordination und sperrenfreie Protokolle |
+| [`workflowhooker`](https://github.com/ellmos-ai/workflowhooker) | Deterministische Hook-Interzeption und Event-Lebenszyklussteuerung |
+| [`memoryhooker`](https://github.com/ellmos-ai/memoryhooker) | Lokale episodische und semantische Speicherindizierung für Agenten |
+
+---
+
 ## Lizenz und Herkunft
 
 MIT — siehe [LICENSE](LICENSE). Sie erfasst alles in diesem Repository: Code, Prompttexte und Dokumentation.
+

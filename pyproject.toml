@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "automizer-for-claude-desktop"
-version = "1.0.1"
+version = "1.0.2"
 description = "Reliably modify and queue scheduled tasks for Claude Desktop"
 readme = "README.md"
 requires-python = ">=3.8"
@@ -27,3 +27,12 @@ classifiers = [
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["tools"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py38"
+
+[tool.ruff.lint]
+select = ["E", "F", "W"]
+ignore = ["E501"]
+

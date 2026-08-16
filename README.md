@@ -3,11 +3,11 @@
 <img src="assets/banner.png" width="100%" alt="Automizer For Claude Desktop banner">
 
 [![Python 3.8+](https://img.shields.io/badge/python-3.8%2B-blue.svg)](https://www.python.org/downloads/)
-[![Version: 1.0.1](https://img.shields.io/badge/version-1.0.1-blue.svg)](pyproject.toml)
+[![Version: 1.0.2](https://img.shields.io/badge/version-1.0.2-blue.svg)](pyproject.toml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Ecosystem: dev-bricks](https://img.shields.io/badge/Ecosystem-dev--bricks-blueviolet.svg)](https://github.com/dev-bricks)
 [![Umbrella: open-bricks](https://img.shields.io/badge/Umbrella-open--bricks-indigo.svg)](https://github.com/open-bricks)
-[![Pytest](https://img.shields.io/badge/Pytest-16%20passed-brightgreen.svg)](tests/)
+[![Pytest](https://img.shields.io/badge/Pytest-21%20passed-brightgreen.svg)](tests/)
 [![LLM Context](https://img.shields.io/badge/LLM%20Context-llms.txt-success.svg)](llms.txt)
 
 **Reliably modify, queue, and manage scheduled tasks for the Claude Desktop App — from inside the app, externally via CLI, or when the app is closed.**
@@ -181,6 +181,25 @@ Automizer operates **100% locally**. It never communicates over external network
 
 ---
 
+## Sibling Tools & Ecosystem
+
+`automizer-for-claude-desktop` is part of the [`dev-bricks`](https://github.com/dev-bricks) suite under the [`open-bricks`](https://github.com/open-bricks) umbrella:
+
+| Tool | Focus & Description |
+|---|---|
+| [`safe-start-for-codex`](https://github.com/dev-bricks/safe-start-for-codex) | Safety supervisor & execution guard for autonomous coding agents |
+| [`companion-for-agy`](https://github.com/dev-bricks/companion-for-agy) | CLI companion and session coordinator for Antigravity agents |
+| [`DevCenter`](https://github.com/dev-bricks/DevCenter) | Central developer workbench and workspace orchestration dashboard |
+| [`CodeBox`](https://github.com/dev-bricks/CodeBox) | Local-first code snippet and development asset container |
+| [`automation-master`](https://github.com/dev-bricks/automation-master) | Unified multi-agent workflow scheduling and orchestration engine |
+| [`MethodenAnalyser`](https://github.com/dev-bricks/MethodenAnalyser) | Structural code analysis and method extraction utility |
+| [`coma`](https://github.com/ellmos-ai/coma) | Cooperative Multi-Agent coordination and lock-free execution protocol |
+| [`workflowhooker`](https://github.com/ellmos-ai/workflowhooker) | Deterministic hook interception and event lifecycle engine |
+| [`memoryhooker`](https://github.com/ellmos-ai/memoryhooker) | Local-first episodic and semantic memory indexing for agents |
+
+---
+
 ## License
 
 Released under the [MIT License](LICENSE).
+
