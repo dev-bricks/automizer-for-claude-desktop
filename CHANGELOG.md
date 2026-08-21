@@ -5,17 +5,20 @@ All notable changes to `dev-bricks/automizer-for-claude-desktop` will be documen
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.0.2] - 2026-08-16
+## [1.0.2] - 2026-08-21
 
 ### Added
-- Created dedicated `SECURITY.md` defining local-first, zero-egress, process discrimination, and vulnerability disclosure policies.
-- Implemented automated metadata, badge, and documentation parity test suite in `tests/test_metadata.py` covering version synchronization, badge integrity, `llms.txt` format, and UTF-8 encoding.
-- Added comprehensive sibling tools and ecosystem navigation matrix (`dev-bricks`, `ellmos-ai`, `open-bricks`) across both `README.md` and `README_de.md`.
-- Added `[tool.ruff]` and `[tool.ruff.lint]` configuration to `pyproject.toml`.
+- Multi-version GitHub Actions CI workflow (`.github/workflows/ci.yml`) with test matrix across Python 3.10, 3.11, 3.12, and 3.13 on Ubuntu and Windows runners.
+- Explicit PEP 621 classifiers for Python 3.13, project discovery keywords, and `[project.urls]` metadata (Homepage, Repository, Issues, Documentation) in `pyproject.toml`.
+- Expanded automated metadata test suite in `tests/test_metadata.py` with CI workflow verification and `pyproject.toml` metadata contract tests (23 passed tests, 100% green).
+- Dedicated `SECURITY.md` defining local-first, zero-egress, process discrimination, and vulnerability disclosure policies.
+- Sibling tools and ecosystem navigation matrix (`dev-bricks`, `ellmos-ai`, `open-bricks`) across both `README.md` and `README_de.md`.
+- `[tool.ruff]` and `[tool.ruff.lint]` configuration in `pyproject.toml`.
 
 ### Changed
-- Synchronized Pytest test badges in `README.md` and `README_de.md` from 16 to 21 passed tests (100% green).
-- Updated `llms.txt` AI/LLM context index timestamp to `2026-08-16` with 21 unit & metadata tests verified.
+- Added GitHub Actions CI status badge to `README.md` and `README_de.md`.
+- Synchronized Pytest test badges in `README.md` and `README_de.md` to 23 passed tests (100% green).
+- Updated `llms.txt` AI/LLM context index timestamp to `2026-08-21` with 23 unit and metadata tests verified.
 
 ## [1.0.1] - 2026-08-14
 

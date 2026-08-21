@@ -22,7 +22,23 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
 ]
+keywords = [
+    "claude-desktop",
+    "scheduled-tasks",
+    "automation",
+    "merger",
+    "local-first",
+    "windows",
+    "dev-bricks",
+]
+
+[project.urls]
+Homepage = "https://github.com/dev-bricks/automizer-for-claude-desktop"
+Repository = "https://github.com/dev-bricks/automizer-for-claude-desktop.git"
+Issues = "https://github.com/dev-bricks/automizer-for-claude-desktop/issues"
+Documentation = "https://github.com/dev-bricks/automizer-for-claude-desktop#readme"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

@@ -46,13 +46,40 @@ def test_llms_txt_integrity():
     assert llms_path.is_file()
     content = llms_path.read_text(encoding="utf-8")
 
-    assert "Last checked: 2026-08-16" in content
+    assert "Last checked: 2026-08-21" in content
     assert "https://github.com/dev-bricks/automizer-for-claude-desktop" in content
     assert "tools/claude_desktop_paths.py" in content
     assert "tools/queue_request.py" in content
     assert "tools/apply_pending_tasks.py" in content
     assert "tools/install_merger_task.ps1" in content
     assert "tools/run_apply_pending_hidden.vbs" in content
+
+
+def test_ci_workflow_integrity():
+    """Verify GitHub Actions CI workflow exists, is valid YAML, and tests all target Python versions."""
+    ci_path = REPO_ROOT / ".github" / "workflows" / "ci.yml"
+    assert ci_path.is_file(), "CI workflow .github/workflows/ci.yml not found"
+    content = ci_path.read_text(encoding="utf-8")
+
+    for py_ver in ["3.10", "3.11", "3.12", "3.13"]:
+        assert py_ver in content, f"Python version {py_ver} missing in CI matrix"
+
+    assert "actions/checkout@" in content
+    assert "actions/setup-python@" in content
+    assert "ruff check" in content
+    assert "pytest" in content
+
+
+def test_pyproject_metadata():
+    """Verify pyproject.toml contains standard project URLs, keywords, and PEP 621 classifiers."""
+    pyproject_text = (REPO_ROOT / "pyproject.toml").read_text(encoding="utf-8")
+
+    assert "Programming Language :: Python :: 3.13" in pyproject_text
+    assert "[project.urls]" in pyproject_text
+    assert "Repository =" in pyproject_text
+    assert "Issues =" in pyproject_text
+    assert "Documentation =" in pyproject_text
+    assert "keywords =" in pyproject_text
 
 
 def test_security_policy_exists():
