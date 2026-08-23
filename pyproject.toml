@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "automizer-for-claude-desktop"
-version = "1.0.2"
+version = "1.0.3"
 description = "Reliably modify and queue scheduled tasks for Claude Desktop"
 readme = "README.md"
 requires-python = ">=3.8"
@@ -16,6 +16,7 @@ classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
+    "Operating System :: Microsoft :: Windows",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
@@ -23,6 +24,8 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Topic :: System :: Systems Administration",
+    "Topic :: Utilities",
 ]
 keywords = [
     "claude-desktop",
@@ -39,6 +42,9 @@ Homepage = "https://github.com/dev-bricks/automizer-for-claude-desktop"
 Repository = "https://github.com/dev-bricks/automizer-for-claude-desktop.git"
 Issues = "https://github.com/dev-bricks/automizer-for-claude-desktop/issues"
 Documentation = "https://github.com/dev-bricks/automizer-for-claude-desktop#readme"
+Changelog = "https://github.com/dev-bricks/automizer-for-claude-desktop/blob/main/CHANGELOG.md"
+Security = "https://github.com/dev-bricks/automizer-for-claude-desktop/blob/main/SECURITY.md"
+Umbrella = "https://github.com/open-bricks"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

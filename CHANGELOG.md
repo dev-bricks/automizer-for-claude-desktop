@@ -5,6 +5,20 @@ All notable changes to `dev-bricks/automizer-for-claude-desktop` will be documen
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.3] - 2026-08-23
+
+### Added
+- Interactive End-to-End Task Lifecycle sequence diagram (`sequenceDiagram` in Mermaid) illustrating agent request staging, process discrimination, atomic backups, registry merging, and verification across `README.md` and `README_de.md`.
+- Structured Quick Navigation jump tables across English and German documentation.
+- Comprehensive Key Capabilities and Safety Invariants architecture matrix detailing process isolation, atomic snapshots, anti-disabling guards, and zero-egress properties.
+- Enhanced bilingual `SECURITY.md` with direct security contacts (`security@ellmos.ai`, `lukas@open-bricks.org`, `support@lukasgeiger.com`), GitHub Security Advisories integration, and supported versions matrix.
+- Extended automated contract test suite in `tests/test_metadata.py` covering Mermaid syntax integrity, sibling ecosystem URLs, security invariants, and PEP 621 classifiers (25 passed tests, 100% green).
+- Expanded PEP 621 metadata in `pyproject.toml` with `Changelog`, `Security`, and `Umbrella` project URLs as well as Windows OS and administration classifiers.
+
+### Changed
+- Synchronized Shields.io status badges across `README.md` and `README_de.md` (CI status, Python 3.8-3.13, Platform Windows, Security Local-First, Version 1.0.3, and Pytest 25 passed | 100%).
+- Updated `llms.txt` AI/LLM context index timestamp to `2026-08-23` and test status to 25 verified tests.
+
 ## [1.0.2] - 2026-08-21
 
 ### Added

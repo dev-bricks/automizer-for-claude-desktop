@@ -4,8 +4,9 @@
 > Canonical Repository: https://github.com/dev-bricks/automizer-for-claude-desktop
 > Ecosystem: dev-bricks | Umbrella: open-bricks
 > License: MIT
-> Last checked: 2026-08-21
-> Test status: 23 passed (Pytest 9.1+)
+> Version: 1.0.3
+> Last checked: 2026-08-23
+> Test status: 25 passed (Pytest 9.1+)
 
 ## Overview & Architecture
 `automizer-for-claude-desktop` is a local utility designed to safely manage, queue, and modify scheduled tasks for the official Claude Desktop app on Windows (and macOS/Linux supported paths).

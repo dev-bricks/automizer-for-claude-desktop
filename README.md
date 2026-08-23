@@ -3,12 +3,14 @@
 <img src="assets/banner.png" width="100%" alt="Automizer For Claude Desktop banner">
 
 [![CI](https://github.com/dev-bricks/automizer-for-claude-desktop/actions/workflows/ci.yml/badge.svg)](https://github.com/dev-bricks/automizer-for-claude-desktop/actions/workflows/ci.yml)
+[![Platform: Windows](https://img.shields.io/badge/Platform-Windows-0078D6.svg?logo=windows&logoColor=white)](https://github.com/dev-bricks/automizer-for-claude-desktop)
 [![Python 3.8+](https://img.shields.io/badge/python-3.8%2B-blue.svg)](https://www.python.org/downloads/)
-[![Version: 1.0.2](https://img.shields.io/badge/version-1.0.2-blue.svg)](pyproject.toml)
+[![Version: 1.0.3](https://img.shields.io/badge/version-1.0.3-blue.svg)](pyproject.toml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Ecosystem: dev-bricks](https://img.shields.io/badge/Ecosystem-dev--bricks-blueviolet.svg)](https://github.com/dev-bricks)
 [![Umbrella: open-bricks](https://img.shields.io/badge/Umbrella-open--bricks-indigo.svg)](https://github.com/open-bricks)
-[![Pytest](https://img.shields.io/badge/Pytest-23%20passed-brightgreen.svg)](tests/)
+[![Security: Local-First](https://img.shields.io/badge/Security-Local--First%20%7C%20Zero--Egress-10b981.svg)](SECURITY.md)
+[![Pytest](https://img.shields.io/badge/Pytest-25%20passed%20%7C%20100%25-brightgreen.svg)](tests/)
 [![LLM Context](https://img.shields.io/badge/LLM%20Context-llms.txt-success.svg)](llms.txt)
 
 **Reliably modify, queue, and manage scheduled tasks for the Claude Desktop App — from inside the app, externally via CLI, or when the app is closed.**
@@ -22,6 +24,27 @@ Language: **English** | [Deutsch](README_de.md)
 > **Unofficial Community Tool.** This project is an independent community utility and is not affiliated with, endorsed, or audited by Anthropic. "Claude" and "Claude Desktop" are trademarks of Anthropic and are used here solely for descriptive purposes to identify compatible software.
 >
 > It reads and writes local configuration files created by the Desktop App. Their format is undocumented and subject to unannounced changes across app releases. Backups are automatically created before every write operation. Use at your own risk.
+
+---
+
+## Quick Navigation
+
+- [Architecture & Queueing Workflow](#architecture--queueing-workflow)
+- [End-to-End Task Lifecycle](#end-to-end-task-lifecycle)
+- [The Challenge](#the-challenge)
+- [The Solution](#the-solution)
+- [Key Capabilities & Safety Invariants](#key-capabilities--safety-invariants)
+- [Three Operating Modes](#three-operating-modes)
+- [Quickstart & Installation](#quickstart--installation)
+- [Windowless Background Execution](#windowless-background-execution)
+- [Tooling Overview](#tooling-overview)
+- [Safety Guarantees & Safeguards](#safety-guarantees--safeguards)
+- [Self-Administration Skill](#optional-self-administration-skill)
+- [Terminology](#terminology)
+- [Privacy & Local Execution](#privacy--local-execution)
+- [Sibling Tools & Ecosystem](#sibling-tools--ecosystem)
+- [Security & Vulnerability Reporting](#security--vulnerability-reporting)
+- [License](#license)
 
 ---
 
@@ -52,6 +75,42 @@ flowchart TD
     class A,B primary;
     class G,H,I success;
     class E,F warning;
+```
+
+---
+
+## End-to-End Task Lifecycle
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Agent as User / Agent
+    participant QR as queue_request.py
+    participant PQ as pending-tasks.json
+    participant Engine as apply_pending_tasks.py
+    participant Paths as claude_desktop_paths.py
+    participant App as Claude Desktop Process
+    participant Reg as scheduled-tasks.json
+    participant Hist as applied-tasks.json
+
+    Agent->>QR: Submit Task Mutation (set / create)
+    QR->>PQ: Validate Schema & Append Pending Wish
+    Note over Engine: Hourly Background Task / Triggered Run
+    Engine->>PQ: Read Pending Wishes
+    Engine->>Paths: Query Execution & Process State
+    Paths->>App: Check Active Executable Path (*WindowsApps*)
+    alt Claude Desktop is Active
+        Paths-->>Engine: Process Active
+        Engine-->>Agent: Defer Execution (Preserve Pending Wishes)
+    else Claude Desktop is Closed
+        Paths-->>Engine: Process Inactive (Safe to Write)
+        Engine->>Reg: Create Timestamped Backup Snapshot
+        Engine->>Reg: Atomically Merge Validated Changes
+        Engine->>Reg: Perform Readback Integrity Verification
+        Engine->>Hist: Record Execution Report
+        Engine->>PQ: Remove Processed Wishes
+        Note over App: Next Launch: Claude Desktop loads new schedule
+    end
 ```
 
 ---
@@ -88,6 +147,21 @@ Automizer decouples change requests from disk-write operations through a staged 
 ```
 
 Modifications take effect with a **deliberate delayed execution**. This prevents silent overwrites, avoids race conditions, and provides an auditable history of applied changes.
+
+---
+
+## Key Capabilities & Safety Invariants
+
+| Capability | Technical Mechanism | Security & Reliability Invariant |
+|---|---|---|
+| **Process Discrimination** | Inspects binary path (`*WindowsApps*`) rather than just process name | Distinguishes Desktop App from Claude Code CLI (`claude.exe`) without false lockouts |
+| **Decoupled Staging Queue** | Atomically appends requests to `_care/pending/pending-tasks.json` | Non-blocking write isolation; safe to enqueue mutations from active Claude sessions |
+| **Automated Pre-Write Snapshots** | Backs up `scheduled-tasks.json` with timestamped snapshot before writing | Zero data loss; automated recovery rollback capability on malformed edits |
+| **Post-Write Readback Verification** | Re-parses JSON and verifies keys immediately after file writes | Guarantees registry integrity before clearing queued mutation requests |
+| **Strict Field Whitelisting** | Whitelists allowed schema keys (`cronExpression`, `enabled`, `model`, etc.) | Prevents tampering with internal paths or unvalidated configuration fields |
+| **Self-Protection Guard** | Rejects requests disabling tasks matching `CDA_SELF_PROTECT_PREFIX` | Prevents automated agents from accidentally disabling supervisory maintenance tasks |
+| **Cross-Host Isolation** | Filters pending requests by matching local hostname | Safe synchronization across multi-device OneDrive environments |
+| **Zero-Egress & Standard Library** | 100% Python standard library with zero external dependencies | Completely offline; zero telemetry, zero analytics, zero network exposure |
 
 ---
 
@@ -186,17 +260,27 @@ Automizer operates **100% locally**. It never communicates over external network
 
 `automizer-for-claude-desktop` is part of the [`dev-bricks`](https://github.com/dev-bricks) suite under the [`open-bricks`](https://github.com/open-bricks) umbrella:
 
-| Tool | Focus & Description |
-|---|---|
-| [`safe-start-for-codex`](https://github.com/dev-bricks/safe-start-for-codex) | Safety supervisor & execution guard for autonomous coding agents |
-| [`companion-for-agy`](https://github.com/dev-bricks/companion-for-agy) | CLI companion and session coordinator for Antigravity agents |
-| [`DevCenter`](https://github.com/dev-bricks/DevCenter) | Central developer workbench and workspace orchestration dashboard |
-| [`CodeBox`](https://github.com/dev-bricks/CodeBox) | Local-first code snippet and development asset container |
-| [`automation-master`](https://github.com/dev-bricks/automation-master) | Unified multi-agent workflow scheduling and orchestration engine |
-| [`MethodenAnalyser`](https://github.com/dev-bricks/MethodenAnalyser) | Structural code analysis and method extraction utility |
-| [`coma`](https://github.com/ellmos-ai/coma) | Cooperative Multi-Agent coordination and lock-free execution protocol |
-| [`workflowhooker`](https://github.com/ellmos-ai/workflowhooker) | Deterministic hook interception and event lifecycle engine |
-| [`memoryhooker`](https://github.com/ellmos-ai/memoryhooker) | Local-first episodic and semantic memory indexing for agents |
+| Tool | Organization | Focus & Description |
+|---|---|---|
+| [`safe-start-for-codex`](https://github.com/dev-bricks/safe-start-for-codex) | `dev-bricks` | Safety supervisor & execution guard for autonomous coding agents |
+| [`companion-for-agy`](https://github.com/dev-bricks/companion-for-agy) | `dev-bricks` | CLI companion and session coordinator for Antigravity agents |
+| [`DevCenter`](https://github.com/dev-bricks/DevCenter) | `dev-bricks` | Central developer workbench and workspace orchestration dashboard |
+| [`CodeBox`](https://github.com/dev-bricks/CodeBox) | `dev-bricks` | Local-first code snippet and development asset container |
+| [`automation-master`](https://github.com/dev-bricks/automation-master) | `dev-bricks` | Unified multi-agent workflow scheduling and orchestration engine |
+| [`MethodenAnalyser`](https://github.com/dev-bricks/MethodenAnalyser) | `dev-bricks` | Structural code analysis and method extraction utility |
+| [`coma`](https://github.com/ellmos-ai/coma) | `ellmos-ai` | Cooperative Multi-Agent coordination and lock-free execution protocol |
+| [`workflowhooker`](https://github.com/ellmos-ai/workflowhooker) | `ellmos-ai` | Deterministic hook interception and event lifecycle engine |
+| [`memoryhooker`](https://github.com/ellmos-ai/memoryhooker) | `ellmos-ai` | Local-first episodic and semantic memory indexing for agents |
+| [`open-bricks`](https://github.com/open-bricks) | `open-bricks` | Umbrella organization and open standard specifications |
+
+---
+
+## Security & Vulnerability Reporting
+
+Please review our [Security Policy](SECURITY.md) for details on responsible vulnerability disclosure and our zero-egress commitments.
+
+- **Security Advisories:** [GitHub Security Advisories](https://github.com/dev-bricks/automizer-for-claude-desktop/security/advisories)
+- **Security Contacts:** [security@ellmos.ai](mailto:security@ellmos.ai) · [lukas@open-bricks.org](mailto:lukas@open-bricks.org) · [support@lukasgeiger.com](mailto:support@lukasgeiger.com)
 
 ---
 

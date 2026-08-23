@@ -30,14 +30,51 @@ def test_badge_parity_and_status():
     readme_de = (REPO_ROOT / "README_de.md").read_text(encoding="utf-8")
 
     for keyword in [
+        "actions/workflows/ci.yml",
         "python-3.8",
         "License-MIT",
         "Ecosystem-dev--bricks",
         "Umbrella-open--bricks",
+        "Security-Local--First",
         "LLM%20Context-llms.txt",
     ]:
         assert keyword in readme_en, f"Badge keyword '{keyword}' missing in README.md"
         assert keyword in readme_de, f"Badge keyword '{keyword}' missing in README_de.md"
+
+
+def test_mermaid_diagrams_syntax():
+    """Verify README.md and README_de.md contain both flowchart and sequenceDiagram Mermaid definitions."""
+    readme_en = (REPO_ROOT / "README.md").read_text(encoding="utf-8")
+    readme_de = (REPO_ROOT / "README_de.md").read_text(encoding="utf-8")
+
+    for doc, name in [(readme_en, "README.md"), (readme_de, "README_de.md")]:
+        assert "```mermaid\nflowchart TD" in doc, f"Flowchart diagram missing in {name}"
+        assert "```mermaid\nsequenceDiagram" in doc, f"Sequence diagram missing in {name}"
+        assert "queue_request.py" in doc
+        assert "apply_pending_tasks.py" in doc
+        assert "scheduled-tasks.json" in doc
+
+
+def test_sibling_ecosystem_and_urls():
+    """Verify sibling ecosystem tools and umbrella URLs are documented in both READMEs."""
+    readme_en = (REPO_ROOT / "README.md").read_text(encoding="utf-8")
+    readme_de = (REPO_ROOT / "README_de.md").read_text(encoding="utf-8")
+
+    sibling_repos = [
+        "safe-start-for-codex",
+        "companion-for-agy",
+        "DevCenter",
+        "CodeBox",
+        "automation-master",
+        "MethodenAnalyser",
+        "coma",
+        "workflowhooker",
+        "memoryhooker",
+    ]
+
+    for repo in sibling_repos:
+        assert repo in readme_en, f"Sibling repo '{repo}' missing in README.md"
+        assert repo in readme_de, f"Sibling repo '{repo}' missing in README_de.md"
 
 
 def test_llms_txt_integrity():
@@ -46,7 +83,7 @@ def test_llms_txt_integrity():
     assert llms_path.is_file()
     content = llms_path.read_text(encoding="utf-8")
 
-    assert "Last checked: 2026-08-21" in content
+    assert "Last checked: 2026-08-23" in content
     assert "https://github.com/dev-bricks/automizer-for-claude-desktop" in content
     assert "tools/claude_desktop_paths.py" in content
     assert "tools/queue_request.py" in content
@@ -75,18 +112,28 @@ def test_pyproject_metadata():
     pyproject_text = (REPO_ROOT / "pyproject.toml").read_text(encoding="utf-8")
 
     assert "Programming Language :: Python :: 3.13" in pyproject_text
+    assert "Operating System :: Microsoft :: Windows" in pyproject_text
     assert "[project.urls]" in pyproject_text
     assert "Repository =" in pyproject_text
     assert "Issues =" in pyproject_text
     assert "Documentation =" in pyproject_text
+    assert "Changelog =" in pyproject_text
+    assert "Security =" in pyproject_text
+    assert "Umbrella =" in pyproject_text
     assert "keywords =" in pyproject_text
 
 
-def test_security_policy_exists():
-    """Verify SECURITY.md exists and contains local-first security principles."""
+def test_security_policy_and_offline_invariants():
+    """Verify SECURITY.md contains security contacts, advisory links, supported versions, and zero-egress principles."""
     sec_path = REPO_ROOT / "SECURITY.md"
     assert sec_path.is_file()
     content = sec_path.read_text(encoding="utf-8")
+
+    assert "security@ellmos.ai" in content
+    assert "lukas@open-bricks.org" in content
+    assert "support@lukasgeiger.com" in content
+    assert "github.com/dev-bricks/automizer-for-claude-desktop/security/advisories" in content
+    assert "Supported Versions" in content or "Unterstützte Versionen" in content
     assert "Zero External Network Connections" in content
     assert "Path-Based Process Discrimination" in content
     assert "Atomic Writes & Automated Backups" in content

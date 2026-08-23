@@ -3,12 +3,14 @@
 <img src="assets/banner.png" width="100%" alt="Automizer For Claude Desktop banner">
 
 [![CI](https://github.com/dev-bricks/automizer-for-claude-desktop/actions/workflows/ci.yml/badge.svg)](https://github.com/dev-bricks/automizer-for-claude-desktop/actions/workflows/ci.yml)
+[![Platform: Windows](https://img.shields.io/badge/Platform-Windows-0078D6.svg?logo=windows&logoColor=white)](https://github.com/dev-bricks/automizer-for-claude-desktop)
 [![Python 3.8+](https://img.shields.io/badge/python-3.8%2B-blue.svg)](https://www.python.org/downloads/)
-[![Version: 1.0.2](https://img.shields.io/badge/version-1.0.2-blue.svg)](pyproject.toml)
+[![Version: 1.0.3](https://img.shields.io/badge/version-1.0.3-blue.svg)](pyproject.toml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Ecosystem: dev-bricks](https://img.shields.io/badge/Ecosystem-dev--bricks-blueviolet.svg)](https://github.com/dev-bricks)
 [![Umbrella: open-bricks](https://img.shields.io/badge/Umbrella-open--bricks-indigo.svg)](https://github.com/open-bricks)
-[![Pytest](https://img.shields.io/badge/Pytest-23%20passed-brightgreen.svg)](tests/)
+[![Security: Local-First](https://img.shields.io/badge/Security-Local--First%20%7C%20Zero--Egress-10b981.svg)](SECURITY.md)
+[![Pytest](https://img.shields.io/badge/Pytest-25%20passed%20%7C%20100%25-brightgreen.svg)](tests/)
 [![LLM Context](https://img.shields.io/badge/LLM%20Context-llms.txt-success.svg)](llms.txt)
 
 **Geplante Aufgaben der Claude-Desktop-App zuverlässig ändern und anlegen — aus der App heraus, von außen, oder bei geschlossener App.**
@@ -22,6 +24,27 @@ Sprache: [English](README.md) | **Deutsch**
 > **Inoffizielles Community-Werkzeug.** Dieses Projekt ist ein unabhängiges Community-Tool und steht in keiner Verbindung zu Anthropic. Es wird von Anthropic weder herausgegeben noch unterstützt oder geprüft. „Claude" und „Claude Desktop" sind Bezeichnungen von Anthropic und werden hier ausschließlich beschreibend verwendet.
 >
 > Es liest und schreibt lokale Dateien, die die Desktop-App anlegt. Deren Format ist nicht dokumentiert und kann sich mit jeder Version ändern. Vor jedem Schreiben wird eine Sicherung angelegt. Nutzung auf eigene Verantwortung.
+
+---
+
+## Schnellnavigation
+
+- [Architektur & Ablauf](#architektur--ablauf)
+- [End-to-End Lebenszyklus](#end-to-end-lebenszyklus)
+- [Das Problem](#das-problem)
+- [Die Lösung](#die-lösung)
+- [Kernfähigkeiten & Sicherheitsinvarianten](#kernfähigkeiten--sicherheitsinvarianten)
+- [Die drei Betriebsarten](#die-drei-betriebsarten)
+- [Installation & Einrichtung](#installation--einrichtung)
+- [Fensterlose Hintergrund-Ausführung](#warum-ein-vbs-wrapper)
+- [Werkzeuge im Überblick](#werkzeuge-im-überblick)
+- [Sicherheitsmerkmale & Schutzfunktionen](#was-das-werkzeug-bewusst-nicht-tut--sicherheitsgarantien)
+- [Self-Administration-Skill](#optional-der-self-administration-skill)
+- [Begriffe](#begriffe)
+- [Daten und Datenschutz](#daten-und-datenschutz)
+- [Geschwister-Werkzeuge & Ökosystem](#geschwister-werkzeuge--ökosystem)
+- [Sicherheitsrichtlinie & Schwachstellen melden](#sicherheitsrichtlinie--schwachstellen-melden)
+- [Lizenz und Herkunft](#lizenz-und-herkunft)
 
 ---
 
@@ -52,6 +75,42 @@ flowchart TD
     class A,B primary;
     class G,H,I success;
     class E,F warning;
+```
+
+---
+
+## End-to-End Lebenszyklus
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Agent as Nutzer / Agent
+    participant QR as queue_request.py
+    participant PQ as pending-tasks.json
+    participant Engine as apply_pending_tasks.py
+    participant Paths as claude_desktop_paths.py
+    participant App as Claude Desktop Prozess
+    participant Reg as scheduled-tasks.json
+    participant Hist as applied-tasks.json
+
+    Agent->>QR: Aufgaben-Änderung übermitteln (set / create)
+    QR->>PQ: Schema validieren & Wunsch an Queue anhängen
+    Note over Engine: Stündlicher Hintergrund-Task / Manueller Aufruf
+    Engine->>PQ: Ausstehende Wünsche einlesen
+    Engine->>Paths: Prozess- und App-Zustand abfragen
+    Paths->>App: Programmpfad auf aktive App prüfen (*WindowsApps*)
+    alt Claude Desktop ist aktiv
+        Paths-->>Engine: Prozess aktiv
+        Engine-->>Agent: Ausführung aufschieben (Wünsche bleiben erhalten)
+    else Claude Desktop ist geschlossen
+        Paths-->>Engine: Prozess inaktiv (Schreiben sicher)
+        Engine->>Reg: Zeitgestempeltes Backup-Snapshot anlegen
+        Engine->>Reg: Validierte Änderungen atomar zusammenführen
+        Engine->>Reg: Rücklese- und Integritätsprüfung durchführen
+        Engine->>Hist: Ausführungsbericht protokollieren
+        Engine->>PQ: Verarbeitete Wünsche aus Queue entfernen
+        Note over App: Nächster Start: Claude Desktop lädt neuen Zeitplan
+    end
 ```
 
 ---
@@ -89,6 +148,21 @@ Wünsche werden vom Schreiben entkoppelt:
 ```
 
 Ein Wunsch wirkt also **verzögert**. Das ist kein Mangel, sondern der Punkt: Er geht nicht verloren, und er wird nachprüfbar angewandt.
+
+---
+
+## Kernfähigkeiten & Sicherheitsinvarianten
+
+| Fähigkeit | Technischer Mechanismus | Sicherheits- & Zuverlässigkeitsgarantie |
+|---|---|---|
+| **Pfadbasierte Prozesserkennung** | Prüft den vollständigen Programmpfad (`*WindowsApps*`) | Verhindert Verwechslung der Desktop-App mit der Claude Code CLI (`claude.exe`) |
+| **Entkoppelte Staging-Queue** | Hängt Mutationswünsche atomar an `pending-tasks.json` an | Schreibt isolationsecht; gefahrlos aus laufenden Claude-Sitzungen nutzbar |
+| **Automatische Pre-Write Snapshots** | Sichert `scheduled-tasks.json` vor jedem Schreiben zeitgestempelt | Kein Datenverlust; strukturierte Rollback-Möglichkeit bei fehlerhaften Eingaben |
+| **Sofortiges Nachlesen & Prüfen** | Validiert JSON-Schema und Schlüssel unmittelbar nach Schreibvorgang | Garantiert Dateiintegrität, bevor Wünsche aus der Warteschlange gelöscht werden |
+| **Strikte Positivliste (Whitelisting)** | Erlaubt nur definierte Schema-Felder (`cronExpression`, `enabled`, etc.) | Schützt interne Pfade und verhindert Einschleusen invalider Konfigurationswerte |
+| **Integrierter Selbstschutz** | Blockiert Deaktivierung von Aufgaben mit `CDA_SELF_PROTECT_PREFIX` | Verhindert, dass autonome Agenten versehentlich Schutz- und Wartungsaufgaben abschalten |
+| **Host-Isolierung** | Filtert Wünsche nach lokalem Rechnernamen | Sicherer Parallelbetrieb in Multi-Host-Setups über synchronisierte OneDrive-Ordner |
+| **Zero-Egress & Standardbibliothek** | 100% Python-Standardbibliothek ohne externe Drittpakete | Vollständig offline; keine Netzwerkverbindungen, keine Telemetrie, kein Datenaustritt |
 
 ---
 
@@ -201,17 +275,27 @@ Daraus folgt für den Betrieb: **`pending-tasks.json`, `applied-tasks.json` und 
 
 `automizer-for-claude-desktop` ist Teil der [`dev-bricks`](https://github.com/dev-bricks)-Suite unter dem [`open-bricks`](https://github.com/open-bricks)-Dach:
 
-| Werkzeug | Schwerpunkt & Kurzbeschreibung |
-|---|---|
-| [`safe-start-for-codex`](https://github.com/dev-bricks/safe-start-for-codex) | Prozesswächter & Sicherheitsaufseher für autonome Programmier-Agenten |
-| [`companion-for-agy`](https://github.com/dev-bricks/companion-for-agy) | CLI-Begleiter und Sitzungskoordinator für Antigravity-Agenten |
-| [`DevCenter`](https://github.com/dev-bricks/DevCenter) | Zentrale Entwickler-Werkbank und Workspace-Orchestrierung |
-| [`CodeBox`](https://github.com/dev-bricks/CodeBox) | Lokaler Container für Code-Snippets und Entwicklungs-Assets |
-| [`automation-master`](https://github.com/dev-bricks/automation-master) | Einheitliche Multi-Agenten-Workflow-Planung und Orchestrierung |
-| [`MethodenAnalyser`](https://github.com/dev-bricks/MethodenAnalyser) | Statische Codeanalyse und Methodenextraktion |
-| [`coma`](https://github.com/ellmos-ai/coma) | Kooperative Multi-Agenten-Koordination und sperrenfreie Protokolle |
-| [`workflowhooker`](https://github.com/ellmos-ai/workflowhooker) | Deterministische Hook-Interzeption und Event-Lebenszyklussteuerung |
-| [`memoryhooker`](https://github.com/ellmos-ai/memoryhooker) | Lokale episodische und semantische Speicherindizierung für Agenten |
+| Werkzeug | Organisation | Schwerpunkt & Kurzbeschreibung |
+|---|---|---|
+| [`safe-start-for-codex`](https://github.com/dev-bricks/safe-start-for-codex) | `dev-bricks` | Prozesswächter & Sicherheitsaufseher für autonome Programmier-Agenten |
+| [`companion-for-agy`](https://github.com/dev-bricks/companion-for-agy) | `dev-bricks` | CLI-Begleiter und Sitzungskoordinator für Antigravity-Agenten |
+| [`DevCenter`](https://github.com/dev-bricks/DevCenter) | `dev-bricks` | Zentrale Entwickler-Werkbank und Workspace-Orchestrierung |
+| [`CodeBox`](https://github.com/dev-bricks/CodeBox) | `dev-bricks` | Lokaler Container für Code-Snippets und Entwicklungs-Assets |
+| [`automation-master`](https://github.com/dev-bricks/automation-master) | `dev-bricks` | Einheitliche Multi-Agenten-Workflow-Planung und Orchestrierung |
+| [`MethodenAnalyser`](https://github.com/dev-bricks/MethodenAnalyser) | `dev-bricks` | Statische Codeanalyse und Methodenextraktion |
+| [`coma`](https://github.com/ellmos-ai/coma) | `ellmos-ai` | Kooperative Multi-Agenten-Koordination und sperrenfreie Protokolle |
+| [`workflowhooker`](https://github.com/ellmos-ai/workflowhooker) | `ellmos-ai` | Deterministische Hook-Interzeption und Event-Lebenszyklussteuerung |
+| [`memoryhooker`](https://github.com/ellmos-ai/memoryhooker) | `ellmos-ai` | Lokale episodische und semantische Speicherindizierung für Agenten |
+| [`open-bricks`](https://github.com/open-bricks) | `open-bricks` | Dachorganisation und offene Standardspezifikationen |
+
+---
+
+## Sicherheitsrichtlinie & Schwachstellen melden
+
+Ausführliche Richtlinien und Sicherheitsgarantien finden Sie in unserer [Sicherheitsrichtlinie (SECURITY.md)](SECURITY.md).
+
+- **Sicherheitshinweise:** [GitHub Security Advisories](https://github.com/dev-bricks/automizer-for-claude-desktop/security/advisories)
+- **Sicherheitskontakte:** [security@ellmos.ai](mailto:security@ellmos.ai) · [lukas@open-bricks.org](mailto:lukas@open-bricks.org) · [support@lukasgeiger.com](mailto:support@lukasgeiger.com)
 
 ---
 
