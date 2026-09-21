@@ -1,0 +1,60 @@
+{
+  "schema": "ellmos.module.v2",
+  "id": "claude-desktop-automizer",
+  "display_name": "Claude Desktop Automizer",
+  "version": "1.0.4",
+  "category": "orchestration",
+  "kind": "workflow",
+  "status": "active",
+  "visibility": "public-candidate",
+  "description": "Geplante Aufgaben der Claude-Desktop-App zuverlässig ändern und anlegen – aus der App heraus, von außen oder bei geschlossener App. Entkoppelt Änderungswünsche vom Schreibzeitpunkt, weil die laufende App ihre Aufgabenliste aus dem Speicher zurückschreibt.",
+  "package": null,
+  "entrypoints": {
+    "merger": "tools/apply_pending_tasks.py",
+    "request": "tools/queue_request.py",
+    "paths": "tools/claude_desktop_paths.py",
+    "install": "tools/install_merger_task.ps1"
+  },
+  "provides": [
+    "desktop-task.read",
+    "desktop-task.change-request",
+    "desktop-task.create",
+    "desktop-task.apply"
+  ],
+  "requires": [],
+  "optional": [
+    "claude-desktop-self-administration"
+  ],
+  "conflicts": [],
+  "surfaces": [
+    "cli",
+    "template",
+    "workflow"
+  ],
+  "profiles": [
+    "automation",
+    "desktop"
+  ],
+  "state": {
+    "ownership": "external",
+    "location": "external"
+  },
+  "boundaries": {
+    "network": "none",
+    "data": "user-local",
+    "platforms": [
+      "windows"
+    ]
+  },
+  "source_of_truth": {
+    "type": "git-repository",
+    "path": ".",
+    "repository": "https://github.com/dev-bricks/automizer-for-claude-desktop"
+  },
+  "adapters": [
+    {
+      "id": "apply_pending_tasks",
+      "type": "cli-wrapper"
+    }
+  ]
+}

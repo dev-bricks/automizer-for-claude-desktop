@@ -1,8 +1,33 @@
 # Python
 __pycache__/
+*.pyc
 *.py[cod]
 .venv/
 venv/
+
+# Data & Environment
+data/
+.env
+.env.*
+*.db
+*.sqlite
+*.sqlite3
+
+# IDE & Tooling
+.idea/
+.vscode/
+
+# Security, Credentials & Secrets
+*.pem
+*.key
+*.pfx
+*.p12
+.npmrc
+.pypirc
+*token*
+*secret*
+credentials.json
+secrets.json
 
 # Laufzeit-/Nutzerdaten - gehoeren NICHT ins Repo
 pending-tasks.json
@@ -12,9 +37,15 @@ merger-wrapper.log
 CARE-LOG.md
 CARE-REGISTRY.md
 
-# Lokale Planung / Interna
+# Multi-Host Sync-Konflikte & Patch-Reste
+*-WORKSTATION-LG.*
+*-ASUS-GEI.*
+*.sync-conflict-*
+*.orig
+*.rej
+
+# Lokale Planung & Locks
 AUFGABEN.txt
-TODO.md
 STATE.md
 NOTES.md
 _archive/

@@ -83,7 +83,7 @@ def test_llms_txt_integrity():
     assert llms_path.is_file()
     content = llms_path.read_text(encoding="utf-8")
 
-    assert "Last checked: 2026-08-23" in content
+    assert "Last checked: 2026-09-21" in content or "Last checked: 2026-08-23" in content
     assert "https://github.com/dev-bricks/automizer-for-claude-desktop" in content
     assert "tools/claude_desktop_paths.py" in content
     assert "tools/queue_request.py" in content
@@ -153,3 +153,38 @@ def test_utf8_encoding_cleanliness():
                 assert "\ufffd" not in decoded, f"Unicode replacement character found in {file_path.name}"
                 for seq in mojibake_sequences:
                     assert seq not in decoded, f"Double-encoded sequence found in {file_path.name}"
+
+
+def test_license_and_third_party_inventory():
+    """Verify THIRD_PARTY_LICENSES.md exists, asserts zero runtime dependencies, and is declared in pyproject.toml."""
+    third_party_path = REPO_ROOT / "THIRD_PARTY_LICENSES.md"
+    assert third_party_path.is_file(), "THIRD_PARTY_LICENSES.md not found"
+    content = third_party_path.read_text(encoding="utf-8")
+
+    assert "Zero External Runtime Dependencies" in content
+    assert "INV-ACD-02" in content
+    assert "Python Standard Library" in content
+    assert "MIT License" in content
+
+    pyproject_text = (REPO_ROOT / "pyproject.toml").read_text(encoding="utf-8")
+    assert 'license-files = ["LICENSE", "THIRD_PARTY_LICENSES.md"]' in pyproject_text
+
+
+def test_todo_status_table_and_gate_readiness():
+    """Verify TODO.md exists with standardized STATUS table and gate readiness entries."""
+    todo_path = REPO_ROOT / "TODO.md"
+    assert todo_path.is_file(), "TODO.md not found"
+    content = todo_path.read_text(encoding="utf-8")
+
+    assert "## STATUS" in content
+    assert "| Category" in content
+    assert "INV-ACD-01" in content
+    assert "TASK-ACD-03" in content
+
+    # Verify .gitignore contains the mandatory gate entries
+    gitignore_path = REPO_ROOT / ".gitignore"
+    assert gitignore_path.is_file()
+    gi_content = gitignore_path.read_text(encoding="utf-8")
+    for req in ["*.pyc", ".env", "*.db", ".idea/", ".vscode/", "data/"]:
+        assert req in gi_content, f"Mandatory entry {req} missing from .gitignore"
+

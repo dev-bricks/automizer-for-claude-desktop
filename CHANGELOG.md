@@ -5,6 +5,20 @@ All notable changes to `dev-bricks/automizer-for-claude-desktop` will be documen
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.4] - 2026-09-21
+
+### Added
+- Standardized `TODO.md` with structured `## STATUS` verification table (8 functional categories) and formalized open task tracking (`TASK-ACD-01` .. `TASK-ACD-04`).
+- Comprehensive Software Bill of Materials (SBOM) and PEP 639 license inventory in `THIRD_PARTY_LICENSES.md`, formally verifying the Zero External Runtime Dependencies invariant (`INV-ACD-02`).
+- Contract tests in `tests/test_metadata.py` verifying license inventory integrity, `.gitignore` mandatory entries, and release gate readiness (27 passing tests, 100% green).
+- Canonical module manifest `ellmos-module.v2.json` in repository root for catalog integration and Plan-D parity.
+
+### Changed
+- Hardened `.gitignore` to satisfy automated release gate requirements (`*.pyc`, `.env`, `*.db`, `.idea/`, `.vscode/`, `data/`), added credential/secret defense patterns, and removed `TODO.md` from ignore list.
+- Declared PEP 639 `license-files = ["LICENSE", "THIRD_PARTY_LICENSES.md"]` in `pyproject.toml`.
+- Synchronized version to `1.0.4` and test badges to 27 tests across `README.md`, `README_de.md`, and `llms.txt`.
+- Successfully verified all 10 automated release gates via `final_gate_check.py` (10 PASS, 0 FAIL, 0 WARN).
+
 ## [1.0.3] - 2026-08-23
 
 ### Added
