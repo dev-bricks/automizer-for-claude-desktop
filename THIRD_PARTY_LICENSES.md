@@ -2,7 +2,9 @@
 
 > **Project:** `dev-bricks/automizer-for-claude-desktop`<br>
 > **Repository License:** [MIT License](LICENSE)<br>
-> **Audited:** 2026-09-21<br>
+> **Audited:** 2026-10-01<br>
+> **Attribution:** [NOTICE](NOTICE)<br>
+> **Level 1 SBOM Plain-Text Companion:** [`THIRD_PARTY_LICENSES.txt`](THIRD_PARTY_LICENSES.txt)<br>
 > **Status:** Invariant Confirmed — Zero External Runtime Dependencies (`INV-ACD-02`)<br>
 > **Architecture & Security:** 100% Local-First, Zero-Egress, Atomic File Swap Protocol, Windows Local AppData Sandbox
 
@@ -14,11 +16,11 @@
 
 - **100% Permissive / Standard Library:** Core execution uses exclusively the Python Standard Library distributed under the Python Software Foundation License (PSFL-2.0).
 - **Zero-Copyleft Isolation Guarantee:** No GPL, AGPL, or viral copyleft dependencies are incorporated into the runtime distribution.
-- **Unprivileged User-Mode Execution:** Operates strictly within user-space directories (`%APPDATA%`, `%LOCALAPPDATA%`) without requesting root or administrator privileges.
+- **Unprivileged User-Mode Execution:** Operates strictly within user-space directories (`%APPDATA%`, `%LOCALAPPDATA%`) without requesting root or administrator privileges (`RunAsInvoker`).
 
 ---
 
-## 2. Invariant Cross-Reference Matrix (INV-ACD-01 .. INV-ACD-08)
+## 2. Invariant Cross-Reference Matrix (INV-ACD-01 .. INV-ACD-10)
 
 | Invariant ID | Guarantee & Scope | Enforcing Subsystem / Module | Compliance Assurance |
 |---|---|---|---|
@@ -29,7 +31,9 @@
 | **INV-ACD-05** | **Decoupled Queue Architecture** | `tools/queue_request.py` | Safe request enqueuing decouples agent write operations from Desktop App memory-lock lifecycles. |
 | **INV-ACD-06** | **Transparent Windowless Background Runner** | `tools/run_apply_pending_hidden.vbs` | Zero intrusive console popup windows during scheduled merge executions. |
 | **INV-ACD-07** | **Zero-Egress Local-First Privacy** | `tools/` | Strictly offline operation; zero outbound HTTP/HTTPS telemetric or analytical connections. |
-| **INV-ACD-08** | **48h Security & Governance SLA** | `SECURITY.md`, `dev-bricks` | Committed 48-hour response SLA and 5-business-day vulnerability triage for all reported security hazards. |
+| **INV-ACD-08** | **Cross-Host Isolation** | `tools/apply_pending_tasks.py` | Fail-closed preservation of wishes tagged with foreign host identifiers in synced environments. |
+| **INV-ACD-09** | **Audit Logging & Structured History** | `tools/apply_pending_tasks.py` | Applied tasks logged to `_care/history/applied-tasks.json` with execution timestamp and rationale. |
+| **INV-ACD-10** | **48h Security & Governance SLA** | `SECURITY.md`, `dev-bricks` | Committed 48-hour response SLA and statutory compliance (§ 521 BGB Gefälligkeitsrecht). |
 
 ---
 

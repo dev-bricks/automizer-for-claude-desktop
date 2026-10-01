@@ -5,6 +5,24 @@ All notable changes to `dev-bricks/automizer-for-claude-desktop` will be documen
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- 18-Point bilingual quick navigation architecture across `README.md` and `README_de.md` with symmetrical dual reciprocal HTML anchors (`<a id="sec-01"></a>` to `<a id="sec-18"></a>`).
+- Target Personas and high-intent SEO query architecture in Section 06 across four technical operator profiles (`[PERSONA-01]` to `[PERSONA-04]`).
+- 10-Dimensional comparative matrix in Section 07 contrasting Automizer against native Claude in-app UI, direct JSON file edits, Windows Task Scheduler, and daemon loops mapped to invariants `INV-LOCAL-01` through `INV-SLA-10`.
+- Canonical open-source `NOTICE` attribution file in repository root recognizing Lukas Geiger, `dev-bricks`, and `open-bricks`.
+- Level 1 SBOM plain-text companion `THIRD_PARTY_LICENSES.txt` with complete invariant verification matrix and permissive license inventory.
+- Statutory disclaimer according to German gratuitous service law (§ 521 BGB Gefälligkeitsrecht) and 48-hour security response SLA in Section 18 of both READMEs.
+- Local marketing, SEO, and discoverability governance register `MARKETING-LOG.txt`.
+- Expanded automated contract test suite in `tests/test_metadata.py` from 27 to 34 tests covering 18-point navigation anchors, personas, matrix, § 521 BGB notice, NOTICE file, and SBOM companion.
+
+### Changed
+- Saturated GitHub repository topics via `gh repo edit` to platform maximum of 20/20 topics.
+- Aligned `keywords` in `pyproject.toml` to 20 saturated remote topics and expanded `project.urls` with `Notice`, `Third-Party Licenses`, `Level 1 SBOM`, `LLM Ready`, and `Marketing Log`.
+- Hardened `license-files` in `pyproject.toml` to declare `LICENSE`, `NOTICE`, `THIRD_PARTY_LICENSES.md`, and `THIRD_PARTY_LICENSES.txt`.
+- Synchronized test badges to 34 passed tests (100% green) across documentation and updated `llms.txt` timestamp to `2026-10-01`.
+
 ## [1.0.4] - 2026-09-21
 
 ### Added

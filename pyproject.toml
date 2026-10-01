@@ -9,7 +9,7 @@ description = "Reliably modify and queue scheduled tasks for Claude Desktop"
 readme = "README.md"
 requires-python = ">=3.8"
 license = "MIT"
-license-files = ["LICENSE", "THIRD_PARTY_LICENSES.md"]
+license-files = ["LICENSE", "NOTICE", "THIRD_PARTY_LICENSES.md", "THIRD_PARTY_LICENSES.txt"]
 authors = [
     {name = "dev-bricks Team"}
 ]
@@ -28,13 +28,26 @@ classifiers = [
     "Topic :: Utilities",
 ]
 keywords = [
-    "claude-desktop",
-    "scheduled-tasks",
+    "agent-tools",
+    "ai-agents",
     "automation",
-    "merger",
-    "local-first",
-    "windows",
+    "claude",
+    "claude-code",
+    "claude-desktop",
+    "cli",
+    "desktop-automation",
     "dev-bricks",
+    "developer-tools",
+    "fail-closed",
+    "local-first",
+    "open-bricks",
+    "python",
+    "runasinvoker",
+    "scheduled-tasks",
+    "scheduler",
+    "task-scheduler",
+    "unofficial",
+    "windows",
 ]
 
 [project.urls]
@@ -44,11 +57,18 @@ Issues = "https://github.com/dev-bricks/automizer-for-claude-desktop/issues"
 Documentation = "https://github.com/dev-bricks/automizer-for-claude-desktop#readme"
 Changelog = "https://github.com/dev-bricks/automizer-for-claude-desktop/blob/main/CHANGELOG.md"
 Security = "https://github.com/dev-bricks/automizer-for-claude-desktop/blob/main/SECURITY.md"
+Notice = "https://github.com/dev-bricks/automizer-for-claude-desktop/blob/main/NOTICE"
+"Third-Party Licenses" = "https://github.com/dev-bricks/automizer-for-claude-desktop/blob/main/THIRD_PARTY_LICENSES.md"
+"Level 1 SBOM" = "https://github.com/dev-bricks/automizer-for-claude-desktop/blob/main/THIRD_PARTY_LICENSES.txt"
+"LLM Ready" = "https://github.com/dev-bricks/automizer-for-claude-desktop/blob/main/llms.txt"
+"Marketing Log" = "https://github.com/dev-bricks/automizer-for-claude-desktop/blob/main/MARKETING-LOG.txt"
 Umbrella = "https://github.com/open-bricks"
 
 [tool.pytest.ini_options]
+minversion = "7.0"
 testpaths = ["tests"]
 pythonpath = ["tools"]
+norecursedirs = [".git", ".pytest_cache", "__pycache__", "build", "dist", ".venv"]
 
 [tool.ruff]
 line-length = 120

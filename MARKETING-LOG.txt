@@ -1,0 +1,87 @@
+# MARKETING-LOG — Automizer for Claude Desktop (`dev-bricks/automizer-for-claude-desktop`)
+
+Dieses Register dokumentiert Discoverability-, Marketing-, Visual-Design- und Ökosystem-Aktivitäten (Pfad B) sowie Pfad-A-Wartungszyklen für das Repository `dev-bricks/automizer-for-claude-desktop`.
+
+---
+
+## [2026-10-01] — Pfad B: Discoverability, 18-Point Bilingual Navigation Parity, Target Personas, Comparative Matrix & Level 1 SBOM Plain-Text Companion
+
+- **Akteur:** Antigravity / Gemini (`WORKSTATION-LG`)
+- **Version:** `1.0.4` (Version gemäß T-20260920-167562623 strikt eingefroren)
+- **Typ:** `GITHUBBOT_ONE_REPO_MARKETING_AND_DESIGN` (Pfad B)
+- **Repo:** `dev-bricks/automizer-for-claude-desktop` (`C:\_Local_DEV\repos\automizer-for-claude-desktop`, Branch `main`, Remote `https://github.com/dev-bricks/automizer-for-claude-desktop.git`)
+- **Auswahlgrund:** Laut `_tools/repo_radar.py candidates --path b` ältester berechtigter Pfad-B-Kandidat der Flotte (Ruhezustand 236.2h > 24h Cooldown, letzte Pfad-B-Prüfung am 2026-08-23 vor 39 Tagen), Arbeitsbaum 100% sauber auf Branch `main`, 0 aktive Locks, strikte Lock-Freigabe bestätigt via `lock_status.py`.
+
+### Durchgeführte Maßnahmen:
+
+1. **GitHub-Discoverability & Topics-Sättigung:**
+   - Erweiterung der GitHub-Repository-Topics via `gh repo edit` auf das Plattform-Maximum von 20/20 Topics:
+     `agent-tools`, `ai-agents`, `automation`, `claude`, `claude-code`, `claude-desktop`, `cli`, `desktop-automation`, `dev-bricks`, `developer-tools`, `fail-closed`, `local-first`, `open-bricks`, `python`, `runasinvoker`, `scheduled-tasks`, `scheduler`, `task-scheduler`, `unofficial`, `windows`.
+
+2. **18-Punkte-Bilinguale Schnellnavigation & Dual-Anchor-Parität:**
+   - Vollständige bilaterale Harmonisierung von `README.md` und `README_de.md` über 18 symmetrische Abschnitte.
+   - Jede Sektion besitzt duale HTML-Anker (`<a id="sec-01"></a><a id="...-en"></a><a id="...-de"></a>`), sodass Querverweise sprachunabhängig exakt auflösen.
+   - Schnellnavigation als strukturierte Markdown-Tabelle (`Nr. | Abschnitt | Section Title | Sprungmarke`) realisiert.
+
+3. **Zielgruppen-Personas & High-Intent SEO-Suchanfragen (Abschnitt 06):**
+   - Ausarbeitung von 4 detaillierten Entwickler- und Betreiber-Profilen:
+     - `[PERSONA-01] Autonomous AI Agent & Claude Prompt Engineer`: Headless-Scheduling ohne UI-Clobbering.
+     - `[PERSONA-02] Windows System Administrator & DevOps Engineer`: Fensterlose Ausführung via VBScript ohne Fokusdiebstahl.
+     - `[PERSONA-03] Privacy-Conscious Developer & Local-First Builder`: 100% Python-Standardbibliothek, Zero-Egress, Air-Gap tauglich.
+     - `[PERSONA-04] Multi-Device Workflow Orchestrator`: Hostname-basierte Fail-Closed-Isolation über OneDrive-Synchronisation.
+   - Verankerung hochrelevanter englischer und deutscher Suchphrasen.
+
+4. **10-Dimensionale 5-Wege-Vergleichsmatrix (Abschnitt 07):**
+   - Umfassender technischer Leistungsvergleich von Automizer vs. Native Claude In-App UI, Direkte JSON-Dateibearbeitung, Windows-Aufgabenplanung allein und Hintergrund-Daemon-Schleifen.
+   - Konsequente Zuordnung zu den Governance- und Laufzeit-Invarianten `INV-LOCAL-01` bis `INV-SLA-10`.
+
+5. **Kanonische Open-Source NOTICE-Datei:**
+   - Anlage der Datei `NOTICE` im Repo-Root mit Urheberrechtszuordnung für Lukas Geiger, `dev-bricks` und den `open-bricks` Dachverband.
+
+6. **Level 1 SBOM Plain-Text-Begleitdokument (`THIRD_PARTY_LICENSES.txt`):**
+   - Erstellung des kanonischen Level 1 SBOM Begleitdokuments Stand 2026-10-01.
+   - Invarianten-Matrix `INV-LOCAL-01`..`INV-SLA-10` vollständig auf `VERIFIED`.
+   - Reines Standardbibliothek-Inventar (PSFL-2.0) und Permissiv-Lizenzen für Entwicklerwerkzeuge (pytest, ruff, setuptools).
+
+7. **Gesetzlicher Haftungsausschluss (§ 521 BGB Gefälligkeitsrecht):**
+   - Verankerung des haftungsrechtlichen Hinweises gemäß § 521 BGB Gefälligkeitsrecht in Abschnitt 18 beider READMEs.
+   - Verbindliche 48-Stunden Security Response SLA und 5-Werktage Triage-Zusage.
+
+8. **PEP 621 / PEP 639 Metadaten-Härtung (`pyproject.toml`):**
+   - `license-files` um `NOTICE` und `THIRD_PARTY_LICENSES.txt` erweitert.
+   - Sättigung der `keywords` auf exakt 20 alphabetisch sortierte GitHub Topics.
+   - Ergänzung der Projekt-URLs um `Notice`, `Third-Party Licenses`, `Level 1 SBOM`, `LLM Ready` und `Marketing Log`.
+   - Ergänzung von `minversion = "7.0"` und `norecursedirs` in `[tool.pytest.ini_options]`.
+
+9. **Shields.io Badges & Kontext-Synchronisation:**
+   - Synchronisation aller Status-Badges (`Attribution: NOTICE`, `Level 1 SBOM: Audited`, `Pytest: 34 passed | 100% green`, `Verified: 2026-10-01`).
+   - Aktualisierung von `llms.txt` und `CHANGELOG.md`.
+
+10. **Automatisierte Vertragstests (`tests/test_metadata.py`):**
+    - Erweiterung der Testsuite von 27 auf 34 Vertragstests (100% bestanden in 0.80s).
+    - Abdeckung für 18-Punkte-Navigationsanker, Personas, Vergleichsmatrix, § 521 BGB Disclaimer, NOTICE-Attribution, Plain-Text SBOM und 20-Keywords-Sättigung.
+
+---
+
+## [2026-09-21] — Pfad A: Technische Hygiene, Release Gate Hardening & Level 1 SBOM Markdown
+
+- **Akteur:** Claude Code (`WORKSTATION-LG`)
+- **Version:** `1.0.4`
+- **Typ:** `GITHUBBOT_ONE_REPO_CLEANER` (Pfad A)
+- **Maßnahmen:**
+  - Standardisierung von `TODO.md` mit strukturierter STATUS-Tabelle.
+  - Erstellung von `THIRD_PARTY_LICENSES.md` mit PEP 639 SBOM.
+  - .gitignore-Härtung für alle 10 automatisierten Release Gates.
+  - Final Gate Check: 10/10 PASS.
+
+---
+
+## [2026-08-23] — Pfad B: Discoverability & Visual Architecture v1.0.3
+
+- **Akteur:** Codex CLI (`WORKSTATION-LG`)
+- **Version:** `1.0.3`
+- **Typ:** `GITHUBBOT_ONE_REPO_MARKETING_AND_DESIGN` (Pfad B)
+- **Maßnahmen:**
+  - Erstellung des End-to-End Task Lifecycle Sequenzdiagramms.
+  - Quick Navigation Sprungmarken und Invariantenmatrix.
+  - Erweiterung von `SECURITY.md` und CI Workflow.

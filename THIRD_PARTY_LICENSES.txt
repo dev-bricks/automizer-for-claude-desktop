@@ -1,0 +1,165 @@
+================================================================================
+THIRD-PARTY SOFTWARE LICENSES & TRANSPARENCY NOTICE (LEVEL 1 SBOM)
+Project: Automizer for Claude Desktop (automizer-for-claude-desktop)
+Organization: dev-bricks (Ecosystem: open-bricks)
+Canonical Repository: https://github.com/dev-bricks/automizer-for-claude-desktop
+Audit Date: 2026-10-01
+Primary License: MIT (see LICENSE)
+Attribution: NOTICE
+Level 1 SBOM Plain-Text Companion: THIRD_PARTY_LICENSES.txt
+Markdown SBOM & Audit Log: THIRD_PARTY_LICENSES.md
+Architecture & Privacy: 100% Local-First, Zero-Egress, RunAsInvoker
+================================================================================
+
+1. EXECUTIVE COMPLIANCE & ZERO-COPYLEFT ASSURANCE
+--------------------------------------------------------------------------------
+Automizer for Claude Desktop is an unofficial utility engineered to reliably inspect,
+queue, modify, and apply scheduled tasks for the Claude Desktop App on Windows
+environments without file-lock contention or data loss.
+
+To guarantee maximum determinism, operational reliability, and zero supply-chain
+risk across multi-agent environments, automizer-for-claude-desktop enforces the
+Zero External Runtime Dependencies invariant (INV-ACD-02 / INV-LOCAL-01).
+
+- 100% Permissive / Standard Library:
+  Core execution uses exclusively the Python Standard Library distributed under
+  the Python Software Foundation License (PSFL-2.0).
+- Zero-Copyleft Isolation Guarantee:
+  No GPL, AGPL, or viral copyleft dependencies are incorporated into the runtime
+  distribution.
+- Unprivileged User-Mode Execution (RunAsInvoker):
+  Operates strictly within user-space directories (%APPDATA%, %LOCALAPPDATA%)
+  without requesting root or administrator privileges.
+- Zero-Egress Perimeter:
+  Initiates zero outbound network connections, opens zero listening sockets,
+  and performs zero telemetry, analytics, or background update checks.
+
+
+2. INVARIANT CROSS-REFERENCE MATRIX
+--------------------------------------------------------------------------------
+All canonical governance, security, and runtime invariants are formally verified:
+
+[INV-LOCAL-01] 100% Offline / Zero-Egress:
+  Enforcement: Pure local runtime, zero outbound network sockets, zero telemetry.
+  Scope: 100% Local Execution. Status: VERIFIED.
+
+[INV-UNPRIV-02] Unprivileged User-Mode Execution (RunAsInvoker):
+  Enforcement: Operates strictly within user token; forbids administrative elevation.
+  Scope: MIT (LICENSE). Status: VERIFIED.
+
+[INV-QUEUE-03] Decoupled Queue Architecture:
+  Enforcement: Safe request enqueuing decouples agent write operations from memory locks.
+  Scope: tools/queue_request.py. Status: VERIFIED.
+
+[INV-PROC-04] Path-Based Process Discrimination:
+  Enforcement: Inspects executable binary path (*WindowsApps*) to distinguish App from CLI.
+  Scope: tools/claude_desktop_paths.py. Status: VERIFIED.
+
+[INV-BACKUP-05] Pre-Mutation Backup Snapshots:
+  Enforcement: Automated pre-modification backups (*.backup-<timestamp>) before writes.
+  Scope: tools/apply_pending_tasks.py. Status: VERIFIED.
+
+[INV-VERIFY-06] Post-Write Readback Integrity Check:
+  Enforcement: Re-parses JSON and verifies keys immediately after file writes.
+  Scope: tools/apply_pending_tasks.py. Status: VERIFIED.
+
+[INV-HOST-07] Multi-Host Fail-Closed Isolation:
+  Enforcement: Preserves wishes tagged with foreign host identifiers across sync setups.
+  Scope: tools/apply_pending_tasks.py. Status: VERIFIED.
+
+[INV-WINDOW-08] Transparent Windowless Background Runner:
+  Enforcement: Zero intrusive console popup windows during scheduled merge executions.
+  Scope: tools/run_apply_pending_hidden.vbs. Status: VERIFIED.
+
+[INV-AUDIT-09] Audit Logging & Structured History:
+  Enforcement: Applied tasks logged to _care/history/applied-tasks.json with full rationale.
+  Scope: tools/apply_pending_tasks.py. Status: VERIFIED.
+
+[INV-SLA-10] 48h Security & Governance SLA:
+  Enforcement: Committed 48-hour response SLA and statutory compliance (§ 521 BGB).
+  Scope: SECURITY.md, dev-bricks. Status: VERIFIED.
+
+
+3. LEVEL 1 SOFTWARE BILL OF MATERIALS (SBOM)
+--------------------------------------------------------------------------------
+
+Runtime Dependencies:
+  Component: Python Standard Library (json, pathlib, os, sys, shutil, argparse)
+  Version Spec: >=3.8
+  SPDX Identifier: Python-2.0 (PSFL-2.0)
+  Upstream: https://github.com/python/cpython
+  Purpose: JSON parsing, filesystem I/O, process handling, logging
+  External Wheels: None (Zero runtime dependencies invariant confirmed)
+
+Development, Test & Build Tooling:
+  Component: pytest
+  Version Spec: >=8.0.0
+  SPDX Identifier: MIT
+  Upstream: https://github.com/pytest-dev/pytest
+  Purpose: Automated test suite, contract validation, and metadata testing
+
+  Component: ruff
+  Version Spec: >=0.5.0
+  SPDX Identifier: MIT OR Apache-2.0
+  Upstream: https://github.com/astral-sh/ruff
+  Purpose: High-performance Python linter and code formatter
+
+  Component: setuptools
+  Version Spec: >=77.0.0
+  SPDX Identifier: MIT
+  Upstream: https://github.com/pypa/setuptools
+  Purpose: Standard PEP 517 / PEP 621 build backend
+
+
+4. LICENSE TEXTS
+--------------------------------------------------------------------------------
+
+--- MIT License ---
+Copyright (c) 2026 dev-bricks Team
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+--- Python Software Foundation License Version 2 (PSFL-2.0) ---
+1. This LICENSE AGREEMENT is between the Python Software Foundation ("PSF"), and
+the Individual or Organization ("Licensee") accessing and otherwise using this
+software ("Python") in source or binary form and its associated documentation.
+
+2. Subject to the terms and conditions of this License Agreement, PSF hereby
+grants Licensee a nonexclusive, royalty-free, world-wide license to reproduce,
+analyze, test, perform and/or display publicly, prepare derivative works, distribute,
+and otherwise use Python alone or in any derivative version, provided, however, that
+PSF's License Agreement and PSF's notice of copyright, i.e., "Copyright (c) 2001-2026
+Python Software Foundation; All Rights Reserved" are included in Python alone or
+in any derivative version prepared by Licensee.
+
+3. In the event Licensee prepares a derivative work that is based on or incorporates
+Python or any part thereof, and wants to make the derivative work available to
+others as provided herein, then Licensee hereby agrees to include in any such work
+a brief summary of the changes made to Python.
+
+4. PSF is making Python available to Licensee on an "AS IS" basis. PSF MAKES NO
+REPRESENTATIONS OR WARRANTIES, EXPRESS OR IMPLIED. BY WAY OF EXAMPLE, BUT NOT
+LIMITATION, PSF MAKES NO AND DISCLAIMS ANY REPRESENTATION OR WARRANTY OF
+MERCHANTABILITY OR FITNESS FOR ANY PARTICULAR PURPOSE OR THAT THE USE OF PYTHON
+WILL NOT INFRINGE ANY THIRD PARTY RIGHTS.
+
+5. PSF SHALL NOT BE LIABLE TO LICENSEE OR ANY OTHER USERS OF PYTHON FOR ANY
+INCIDENTAL, SPECIAL, OR CONSEQUENTIAL DAMAGES OR LOSS AS A RESULT OF MODIFYING,
+DISTRIBUTING, OR OTHERWISE USING PYTHON, OR ANY DERIVATIVE THEREOF, EVEN IF
+ADVISED OF THE POSSIBILITY THEREOF.

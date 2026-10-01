@@ -4,26 +4,51 @@
 > Canonical Repository: https://github.com/dev-bricks/automizer-for-claude-desktop
 > Ecosystem: dev-bricks | Umbrella: open-bricks
 > License: MIT
-> Version: 1.0.4
-> Last checked: 2026-09-21
-> Test status: 27 passed (Pytest 9.1+)
+> Attribution: NOTICE (Copyright (c) 2026 Lukas Geiger)
+> Level 1 SBOM: THIRD_PARTY_LICENSES.txt (audited 2026-10-01)
+> Version: 1.0.4 (frozen per T-20260920-167562623)
+> Last checked: 2026-10-01
+> Test status: 34 passed (Pytest 9.1+) | 100% green
 
 ## Overview & Architecture
 `automizer-for-claude-desktop` is a local utility designed to safely manage, queue, and modify scheduled tasks for the official Claude Desktop app on Windows (and macOS/Linux supported paths).
 
 Because the Claude Desktop application maintains its internal task registry (`scheduled-tasks.json`) in memory and overwrites the file on session teardown, direct file edits made while the app is active are silently lost. Automizer resolves this concurrency challenge by decoupling mutation requests into a staging queue (`_care/pending/pending-tasks.json`) and applying them atomically when the desktop app is closed.
 
+## 18-Point Bilingual Navigation Structure
+The documentation is organized across 18 symmetrical sections with reciprocal HTML anchors (`#sec-01` to `#sec-18`):
+1. Architecture & Queueing Workflow
+2. End-to-End Task Lifecycle (sequenceDiagram with autonumber)
+3. The Challenge (AppData registry vs Documents prompts)
+4. The Solution (staged queue, delayed execution)
+5. Key Capabilities & Safety Invariants (INV-LOCAL-01 .. INV-SLA-10)
+6. Target Personas & High-Intent SEO Queries ([PERSONA-01] .. [PERSONA-04])
+7. Comparative Matrix vs. Alternatives (10-dimensional 5-way matrix)
+8. Three Operating Modes (In-App, External Active, App Closed)
+9. Quickstart & Installation
+10. Windowless Background Execution (VBScript WScript.Shell.Run 0)
+11. Tooling Overview & Path Resolution
+12. Safety Guarantees & Safeguards
+13. Optional Self-Administration Skill
+14. Terminology
+15. Privacy & Local-First Execution (Zero-Egress, PSFL-2.0 stdlib only)
+16. Sibling Tools & Ecosystem (dev-bricks, ellmos-ai, open-bricks)
+17. Security & Vulnerability Reporting (48h SLA)
+18. License & Statutory Disclaimer (§ 521 BGB Gefälligkeitsrecht)
+
 ## Repository Structure & Key Components
+- `NOTICE`: Canonical open-source attribution notice (Lukas Geiger, dev-bricks, open-bricks).
+- `THIRD_PARTY_LICENSES.txt`: Plain-text Level 1 SBOM companion with 10-invariant verification table.
+- `THIRD_PARTY_LICENSES.md`: Markdown software bill of materials and license texts.
+- `MARKETING-LOG.txt`: Local marketing, SEO, and discoverability governance log.
 - `tools/claude_desktop_paths.py`: Dynamic path resolution helper for the registry file (`scheduled-tasks.json`) and task prompt directory (`<Documents>/Claude/Scheduled/`). Reads the Windows User Shell Folders registry key (`Personal`) to support OneDrive Known-Folder-Move redirection.
 - `tools/queue_request.py`: CLI tool for enqueueing task modification (`set`) or creation (`create`) requests into `pending-tasks.json`.
 - `tools/apply_pending_tasks.py`: Atomic merger engine. Checks if Claude Desktop is running, creates timestamped pre-write backups, merges queued changes into `scheduled-tasks.json`, performs post-write readback validation, and logs results to `applied-tasks.json`.
 - `tools/install_merger_task.ps1`: PowerShell installer registering an hourly scheduled background task in Windows Task Scheduler.
 - `tools/run_apply_pending_hidden.vbs`: VBScript wrapper executing the merger in windowless mode (`CREATE_NO_WINDOW`) without console popups.
-- `prompts/`: Agent prompt templates:
-  - `prompts/01_in-app_en.md` / `01_in-der-app.md`: Prompt injection for in-app Claude agents to stage modifications.
-  - `prompts/02_from-outside-app-running_en.md` / `02_von-aussen-app-laeuft.md`: Instructions for external CLI agents when the app is active.
-  - `prompts/03_app-closed_en.md` / `03_app-geschlossen.md`: Instructions for immediate execution when the app is verified closed.
+- `prompts/`: Agent prompt templates (in-app, external running, app closed).
 - `skill/self-administration-of-scheduled-tasks/SKILL.md`: Claude Skill definition for automated self-management.
+- `tests/test_metadata.py`: Pytest contract suite for 18-point navigation, Personas, comparative matrix, § 521 BGB, Level 1 SBOM, and PEP 621 metadata.
 - `tests/test_automizer.py`: Pytest suite for platform detection, directory helpers, queue serialization, registry parsing, fail-closed cross-host handling, and path diagnostics.
 - `tests/test_apply_pending_tasks.py`: Pytest suite for permission mode validation, fail-closed handling, rollback commands, and dry-run report generation.
 
@@ -51,9 +76,5 @@ pytest
 ruff check .
 ```
 
-## Search Keywords & Discovery Phrases
-- Claude Desktop scheduled tasks automation
-- Claude Desktop scheduled-tasks.json manager
-- Windows scheduled task merger for Claude Desktop
-- Safe background task modifier Claude App
-- LLM agent task self-administration
+## Saturated 20/20 Discoverability Keywords & Topics
+agent-tools, ai-agents, automation, claude, claude-code, claude-desktop, cli, desktop-automation, dev-bricks, developer-tools, fail-closed, local-first, open-bricks, python, runasinvoker, scheduled-tasks, scheduler, task-scheduler, unofficial, windows.
